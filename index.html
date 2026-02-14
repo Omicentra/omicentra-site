@@ -5,27 +5,35 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Omicentra</title>
 
-  <!-- (opcjonalnie) Google Font: Montserrat -->
+  <!-- (opcjonalnie) Montserrat -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --bg1:#0b1220;
-      --bg2:#0f172a;
-      --card: rgba(255,255,255,.07);
-      --text:#eaf0ff;
-      --muted: rgba(234,240,255,.78);
-      --muted2: rgba(234,240,255,.60);
-      --border: rgba(255,255,255,.16);
-      --shadow: 0 18px 60px rgba(0,0,0,.35);
-      --accent1:#7c3aed;
-      --accent2:#06b6d4;
-      --radius: 22px;
+      /* Jasna paleta: biel/srebro/pastel */
+      --bg: #fbfcfe;
+      --bg2:#f4f6fb;
+      --card:#ffffff;
+      --border:#d9dee8;
+      --shadow: 0 18px 50px rgba(16,24,40,.10);
 
-      --focus: #ffffff;          /* obwódka focus */
-      --focusGlow: rgba(6,182,212,.35);
+      /* Tekst (kontrast pod WCAG na jasnym) */
+      --text:#111827;   /* prawie czarny */
+      --muted:#374151;  /* ciemny szary (czytelny) */
+      --muted2:#4b5563;
+
+      /* Pastele + akcent */
+      --accent1:#7c3aed; /* fiolet */
+      --accent2:#06b6d4; /* cyjan */
+      --accentSoft: rgba(124,58,237,.10);
+
+      /* Focus (mocny, widoczny) */
+      --focus:#0ea5e9;
+      --focusRing: rgba(14,165,233,.25);
+
+      --radius: 22px;
     }
 
     *{box-sizing:border-box}
@@ -36,53 +44,39 @@
       font-family: Montserrat, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color:var(--text);
       background:
-        radial-gradient(1200px 600px at 15% 10%, rgba(124,58,237,.35), transparent 60%),
-        radial-gradient(900px 500px at 85% 25%, rgba(6,182,212,.25), transparent 55%),
-        linear-gradient(180deg, var(--bg1), var(--bg2));
-      overflow-x:hidden;
+        radial-gradient(900px 520px at 15% 10%, rgba(124,58,237,.14), transparent 60%),
+        radial-gradient(760px 460px at 85% 18%, rgba(6,182,212,.14), transparent 55%),
+        linear-gradient(180deg, var(--bg), var(--bg2));
       line-height:1.5;
     }
 
-    /* Delikatna siatka w tle (dekoracja) */
-    body::before{
-      content:"";
-      position:fixed; inset:0;
-      background-image:
-        linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
-      background-size: 48px 48px;
-      opacity:.18;
-      pointer-events:none;
-      mask-image: radial-gradient(70% 55% at 50% 35%, #000 45%, transparent 100%);
-    }
-
-    /* Skip link */
+    /* Skip link (WCAG) */
     .skip-link{
       position:absolute;
-      left:10px;
-      top:10px;
-      transform: translateY(-140%);
-      background: rgba(0,0,0,.85);
+      left:12px;
+      top:12px;
+      transform: translateY(-150%);
+      background: #ffffff;
       color: var(--text);
       padding: 12px 14px;
       border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.25);
+      border: 2px solid var(--focus);
       text-decoration:none;
       z-index: 1000;
+      box-shadow: var(--shadow);
     }
     .skip-link:focus{
       transform: translateY(0);
-      outline: 2px solid var(--focus);
-      outline-offset: 3px;
-      box-shadow: 0 0 0 6px var(--focusGlow);
+      outline:none;
+      box-shadow: 0 0 0 6px var(--focusRing), var(--shadow);
     }
 
-    /* Czytelne focusy */
+    /* Focusy klawiatury */
     :focus{outline:none}
     :focus-visible{
       outline: 2px solid var(--focus);
       outline-offset: 3px;
-      box-shadow: 0 0 0 6px var(--focusGlow);
+      box-shadow: 0 0 0 6px var(--focusRing);
       border-radius: 12px;
     }
 
@@ -97,32 +91,28 @@
     .card{
       width:min(980px, 100%);
       border:1px solid var(--border);
-      background: linear-gradient(180deg, var(--card), rgba(255,255,255,.04));
+      background: var(--card);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       position:relative;
       overflow:hidden;
     }
 
-    /* dekoracyjny glow */
+    /* delikatna “srebrna” siatka jako dekoracja */
     .card::before{
       content:"";
-      position:absolute; inset:-2px;
-      background: conic-gradient(from 180deg,
-        rgba(124,58,237,0),
-        rgba(124,58,237,.55),
-        rgba(6,182,212,.55),
-        rgba(124,58,237,0)
-      );
-      opacity:.22;
-      filter: blur(18px);
-      z-index:0;
+      position:absolute; inset:0;
+      background-image:
+        linear-gradient(rgba(17,24,39,.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(17,24,39,.05) 1px, transparent 1px);
+      background-size: 56px 56px;
+      opacity:.35;
       pointer-events:none;
+      mask-image: radial-gradient(70% 60% at 35% 25%, #000 55%, transparent 100%);
     }
 
     .content{
       position:relative;
-      z-index:1;
       padding:56px 56px 44px;
       display:grid;
       grid-template-columns: 1.2fr .8fr;
@@ -145,41 +135,28 @@
       margin-bottom:18px;
       justify-content:flex-start;
     }
-    @media (max-width: 860px){
-      header.brand{justify-content:center;}
-    }
+    @media (max-width: 860px){ header.brand{justify-content:center;} }
 
-    /* Logo jako czysto dekoracyjny placeholder — ukryty przed SR */
+    /* Placeholder logo: dekoracyjny */
     .logo{
       width:54px; height:54px;
       border-radius:16px;
-      border:1px solid rgba(255,255,255,.18);
-      background: linear-gradient(135deg, rgba(124,58,237,.35), rgba(6,182,212,.22));
+      border:1px solid var(--border);
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.95), rgba(255,255,255,.55)),
+        linear-gradient(135deg, rgba(124,58,237,.18), rgba(6,182,212,.14));
       display:grid;
       place-items:center;
-      box-shadow: 0 14px 40px rgba(0,0,0,.25);
+      box-shadow: 0 14px 40px rgba(16,24,40,.10);
       position:relative;
       overflow:hidden;
     }
-    .logo::after{
-      content:"";
-      position:absolute; inset:-40%;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.35), transparent 55%);
-      transform: rotate(18deg);
-      opacity:.35;
-      pointer-events:none;
-    }
     .logo span{
-      position:relative;
-      font-weight:700;
-      letter-spacing:.5px;
-      opacity:.92;
+      font-weight:800;
+      color: #111827;
+      opacity:.85;
+      letter-spacing:.3px;
     }
-
-    .brand-title{
-      text-align:left;
-    }
-    @media (max-width: 860px){ .brand-title{text-align:center;} }
 
     .brand-title strong{
       display:block;
@@ -206,16 +183,16 @@
       gap:10px;
       padding:10px 14px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.18);
-      background: rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.7);
       color: var(--muted);
-      font-weight:600;
+      font-weight:700;
       margin: 0 0 18px;
     }
     .dot{
       width:10px;height:10px;border-radius:50%;
       background: linear-gradient(135deg, var(--accent1), var(--accent2));
-      box-shadow: 0 0 0 4px rgba(124,58,237,.18);
+      box-shadow: 0 0 0 4px rgba(124,58,237,.10);
     }
 
     .sub{
@@ -223,19 +200,19 @@
       line-height: 1.65;
       color: var(--muted);
       margin: 0 0 26px;
-      max-width: 58ch; /* czytelność */
+      max-width: 60ch;
     }
     @media (max-width: 860px){ .sub{margin-left:auto; margin-right:auto;} }
 
-    .actions{
+    nav.actions{
       display:flex;
       gap:12px;
       align-items:center;
       flex-wrap:wrap;
     }
-    @media (max-width: 860px){ .actions{justify-content:center;} }
+    @media (max-width: 860px){ nav.actions{justify-content:center;} }
 
-    /* Linki/przyciski: cel dotykowy >= 44px */
+    /* Przycisk/link: min 44px, kontrast, focus */
     .btn{
       display:inline-flex;
       min-height:44px;
@@ -244,10 +221,10 @@
       gap:10px;
       padding: 12px 16px;
       border-radius: 14px;
-      border:1px solid rgba(255,255,255,.18);
+      border:1px solid var(--border);
       color: var(--text);
       text-decoration:none;
-      font-weight:700;
+      font-weight:800;
       letter-spacing:.2px;
       user-select:none;
       white-space:nowrap;
@@ -256,19 +233,18 @@
     .btn:active{transform: translateY(1px);}
 
     .btn-primary{
-      border-color: rgba(124,58,237,.55);
-      background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(6,182,212,.75));
-      box-shadow: 0 12px 30px rgba(124,58,237,.25);
+      border-color: rgba(124,58,237,.35);
+      background: linear-gradient(135deg, rgba(124,58,237,.16), rgba(6,182,212,.14));
     }
-    .btn-primary:hover{filter: brightness(1.05);}
+    .btn-primary:hover{filter: brightness(1.02); border-color: rgba(124,58,237,.55);}
 
     .btn-ghost{
-      background: rgba(255,255,255,.06);
+      background: #ffffff;
       color: var(--muted);
     }
     .btn-ghost:hover{
-      background: rgba(255,255,255,.09);
-      border-color: rgba(255,255,255,.24);
+      background: rgba(17,24,39,.03);
+      border-color: rgba(17,24,39,.18);
       color: var(--text);
     }
 
@@ -280,12 +256,13 @@
     }
 
     aside.side{
-      border:1px solid rgba(255,255,255,.14);
-      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.75);
       border-radius: var(--radius);
       padding: 18px;
       position:relative;
       overflow:hidden;
+      backdrop-filter: blur(6px);
     }
 
     .pill{
@@ -295,10 +272,10 @@
       padding: 8px 12px;
       min-height: 34px;
       border-radius:999px;
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.14);
-      color: var(--muted);
-      font-weight:600;
+      background: rgba(124,58,237,.10);
+      border: 1px solid rgba(124,58,237,.18);
+      color: #1f2937;
+      font-weight:800;
       font-size: 13px;
       margin-bottom: 10px;
     }
@@ -320,8 +297,8 @@
     ul.list li{
       padding:12px 12px;
       border-radius: 14px;
-      border:1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.10);
+      border:1px solid rgba(17,24,39,.12);
+      background: rgba(17,24,39,.02);
       color: var(--muted);
       font-size: 14px;
       line-height: 1.45;
@@ -329,7 +306,6 @@
 
     footer.footer{
       position:relative;
-      z-index:1;
       padding: 0 56px 20px;
       display:flex;
       justify-content:space-between;
@@ -343,11 +319,14 @@
     }
 
     footer.footer a{
-      color: var(--muted);
+      color: #1f2937;
       text-decoration:none;
-      border-bottom: 1px dashed rgba(255,255,255,.28);
+      border-bottom: 2px solid rgba(124,58,237,.25);
+      padding-bottom:2px;
     }
-    footer.footer a:hover{color: var(--text); border-bottom-color: rgba(255,255,255,.48);}
+    footer.footer a:hover{
+      border-bottom-color: rgba(6,182,212,.40);
+    }
 
     /* Visually hidden utility */
     .sr-only{
@@ -360,17 +339,14 @@
       border:0;
     }
 
-    /* Redukcja ruchu */
+    /* Redukcja animacji */
     @media (prefers-reduced-motion: reduce){
       *{scroll-behavior:auto !important}
       .btn{transition:none}
-      .card::before{filter:none}
     }
 
-    /* Wyraźniejsze odstępy przy większym tekście */
-    @media (min-width: 1px){
-      p{max-width: 65ch}
-    }
+    /* Większa czytelność przy większym tekście */
+    p{max-width: 65ch}
   </style>
 </head>
 
@@ -383,11 +359,7 @@
 
         <main id="main" tabindex="-1" aria-labelledby="page-title">
           <header class="brand">
-            <!-- dekoracja: aria-hidden -->
-            <div class="logo" aria-hidden="true">
-              <span aria-hidden="true">O</span>
-            </div>
-
+            <div class="logo" aria-hidden="true"><span aria-hidden="true">O</span></div>
             <div class="brand-title">
               <strong>Omicentra</strong>
               <small>Spotlight on bioinformatics</small>
@@ -411,10 +383,7 @@
               <span aria-hidden="true">→</span>
               <span class="sr-only">Przejście do strony z konferencjami</span>
             </a>
-
-            <a class="btn btn-ghost" href="#about">
-              What is this?
-            </a>
+            <a class="btn btn-ghost" href="#about">What is this?</a>
           </nav>
 
           <p class="meta" id="about">
@@ -423,10 +392,7 @@
         </main>
 
         <aside class="side" aria-labelledby="side-title">
-          <div class="pill" role="status" aria-live="polite">
-            Coming soon • beta
-          </div>
-
+          <div class="pill" role="status" aria-live="polite">Coming soon • beta</div>
           <h2 id="side-title">Co będzie na start</h2>
 
           <ul class="list">
@@ -440,9 +406,7 @@
 
       <footer class="footer" aria-label="Stopka">
         <div>© <span id="year" aria-label="Aktualny rok"></span> Omicentra</div>
-        <div>
-          <a href="/conferences.html">Conferences</a>
-        </div>
+        <div><a href="/conferences.html">Conferences</a></div>
       </footer>
     </div>
   </div>
