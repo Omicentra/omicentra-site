@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="pl">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -41,7 +41,6 @@
       line-height:1.5;
     }
 
-    /* Skip link */
     .skip-link{
       position:absolute;
       left:12px; top:12px;
@@ -67,7 +66,6 @@
       border-radius: 12px;
     }
 
-    /* Normalny layout: jak w Twoim pierwszym kodzie */
     .wrap{
       max-width: 980px;
       margin: 0 auto;
@@ -83,7 +81,6 @@
       margin-bottom: 26px;
     }
 
-    /* Placeholder logo (możesz podmienić na img/svg) */
     .logo{
       width:56px; height:56px;
       border-radius:16px;
@@ -117,6 +114,7 @@
       font-weight:700;
       margin: 0 0 18px;
     }
+
     .dot{
       width:10px;height:10px;border-radius:50%;
       background: linear-gradient(135deg, var(--accent1), var(--accent2));
@@ -157,25 +155,30 @@
       background:#fff;
       transition: transform .12s ease, filter .12s ease, background .12s ease, border-color .12s ease;
     }
+
     .btn:active{transform: translateY(1px);}
 
     .btn-primary{
       border-color: rgba(124,58,237,.35);
       background: linear-gradient(135deg, rgba(124,58,237,.16), rgba(6,182,212,.14));
     }
-    .btn-primary:hover{filter: brightness(1.02); border-color: rgba(124,58,237,.55);}
+
+    .btn-primary:hover{
+      filter: brightness(1.02);
+      border-color: rgba(124,58,237,.55);
+    }
 
     .btn-ghost{
       background: var(--soft);
       color: var(--muted);
     }
+
     .btn-ghost:hover{
       background: rgba(17,24,39,.03);
       border-color: rgba(17,24,39,.18);
       color: var(--text);
     }
 
-    /* Sekcja info (normalnie, bez wizytówki) */
     .info{
       max-width: 980px;
       margin: 0 auto;
@@ -185,8 +188,8 @@
     .panel{
       border:1px solid var(--border);
       border-radius: var(--radius);
-      background: rgba(255,255,255,.8);
-      padding: 16px 16px;
+      background: rgba(255,255,255,.85);
+      padding: 16px;
     }
 
     .pill{
@@ -219,7 +222,7 @@
     }
 
     ul.list li{
-      padding:12px 12px;
+      padding:12px;
       border-radius: 14px;
       border:1px solid rgba(17,24,39,.12);
       background: rgba(17,24,39,.02);
@@ -246,7 +249,10 @@
       border-bottom: 2px solid rgba(124,58,237,.25);
       padding-bottom:2px;
     }
-    footer a:hover{border-bottom-color: rgba(6,182,212,.40);}
+
+    footer a:hover{
+      border-bottom-color: rgba(6,182,212,.40);
+    }
 
     .sr-only{
       position:absolute;
@@ -262,15 +268,17 @@
       *{scroll-behavior:auto !important}
       .btn{transition:none}
     }
+
+    p{max-width: 65ch}
   </style>
 </head>
 
 <body>
-  <a class="skip-link" href="#main">Przejdź do treści</a>
+  <a class="skip-link" href="#main">Skip to content</a>
 
   <main id="main" tabindex="-1">
     <section class="wrap" aria-labelledby="page-title">
-      <header aria-label="Nagłówek marki">
+      <header aria-label="Brand header">
         <div class="logo" aria-hidden="true">O</div>
         <div style="text-align:left">
           <div style="font-weight:800; letter-spacing:.2px;">Omicentra</div>
@@ -286,38 +294,33 @@
       </p>
 
       <p class="sub">
-        Launching soon. Tracking conferences and research trends worldwide — w jednym miejscu, bez chaosu.
+        Launching soon. Tracking conferences and research trends worldwide.
       </p>
 
-      <nav class="actions" aria-label="Główne akcje">
+      <nav class="actions" aria-label="Primary actions">
         <a class="btn btn-primary" href="/conferences.html">
           <span>Go to Conferences</span>
           <span aria-hidden="true">→</span>
-          <span class="sr-only">Przejście do strony z konferencjami</span>
+          <span class="sr-only">Navigate to the conferences page</span>
         </a>
-        <a class="btn btn-ghost" href="#about">What is this?</a>
       </nav>
-
-      <p id="about" style="margin:18px auto 0; color:var(--muted2); font-size:13px; max-width:65ch;">
-        Minimal landing page. Podmień logo na SVG/PNG, a teksty na docelowe.
-      </p>
     </section>
 
-    <section class="info" aria-label="Informacje o starcie">
+    <section class="info" aria-label="Launch information">
       <div class="panel">
         <div class="pill" role="status" aria-live="polite">Coming soon • beta</div>
-        <h2>Co będzie na start</h2>
+        <h2>What’s included at launch</h2>
         <ul class="list">
-          <li><strong>Conferences</strong>: kalendarz + filtry (region, temat, format online/onsite).</li>
-          <li><strong>Trends</strong>: szybkie podsumowania kierunków w bioinformatyce i omics.</li>
-          <li><strong>Notes</strong>: krótkie „briefy” z linkami do źródeł.</li>
+          <li><strong>Conferences</strong>: calendar view with filters (region, topic, online/onsite).</li>
+          <li><strong>Trends</strong>: summaries of developments in bioinformatics and omics.</li>
+          <li><strong>Notes</strong>: curated briefs with source links.</li>
         </ul>
       </div>
     </section>
   </main>
 
-  <footer aria-label="Stopka">
-    <div>© <span id="year" aria-label="Aktualny rok"></span> Omicentra</div>
+  <footer aria-label="Footer">
+    <div>© <span id="year" aria-label="Current year"></span> Omicentra</div>
     <div><a href="/conferences.html">Conferences</a></div>
   </footer>
 
