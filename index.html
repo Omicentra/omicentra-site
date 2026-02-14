@@ -15,34 +15,36 @@
       --bg1:#0b1220;
       --bg2:#0f172a;
       --card: rgba(255,255,255,.07);
-      --card2: rgba(255,255,255,.10);
       --text:#eaf0ff;
-      --muted: rgba(234,240,255,.75);
-      --muted2: rgba(234,240,255,.55);
-      --border: rgba(255,255,255,.14);
+      --muted: rgba(234,240,255,.78);
+      --muted2: rgba(234,240,255,.60);
+      --border: rgba(255,255,255,.16);
       --shadow: 0 18px 60px rgba(0,0,0,.35);
-      --accent1:#7c3aed; /* fiolet */
-      --accent2:#22c55e; /* zielony */
-      --accent3:#06b6d4; /* cyjan */
+      --accent1:#7c3aed;
+      --accent2:#06b6d4;
       --radius: 22px;
+
+      --focus: #ffffff;          /* obwódka focus */
+      --focusGlow: rgba(6,182,212,.35);
     }
 
     *{box-sizing:border-box}
-    html,body{height:100%}
+    html{height:100%}
     body{
+      min-height:100%;
       margin:0;
       font-family: Montserrat, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color:var(--text);
       background:
         radial-gradient(1200px 600px at 15% 10%, rgba(124,58,237,.35), transparent 60%),
         radial-gradient(900px 500px at 85% 25%, rgba(6,182,212,.25), transparent 55%),
-        radial-gradient(800px 500px at 70% 90%, rgba(34,197,94,.18), transparent 55%),
         linear-gradient(180deg, var(--bg1), var(--bg2));
       overflow-x:hidden;
+      line-height:1.5;
     }
 
-    /* delikatna siatka w tle */
-    body:before{
+    /* Delikatna siatka w tle (dekoracja) */
+    body::before{
       content:"";
       position:fixed; inset:0;
       background-image:
@@ -52,6 +54,36 @@
       opacity:.18;
       pointer-events:none;
       mask-image: radial-gradient(70% 55% at 50% 35%, #000 45%, transparent 100%);
+    }
+
+    /* Skip link */
+    .skip-link{
+      position:absolute;
+      left:10px;
+      top:10px;
+      transform: translateY(-140%);
+      background: rgba(0,0,0,.85);
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.25);
+      text-decoration:none;
+      z-index: 1000;
+    }
+    .skip-link:focus{
+      transform: translateY(0);
+      outline: 2px solid var(--focus);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 6px var(--focusGlow);
+    }
+
+    /* Czytelne focusy */
+    :focus{outline:none}
+    :focus-visible{
+      outline: 2px solid var(--focus);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 6px var(--focusGlow);
+      border-radius: 12px;
     }
 
     .container{
@@ -72,20 +104,20 @@
       overflow:hidden;
     }
 
-    /* „glow” na krawędzi */
-    .card:before{
+    /* dekoracyjny glow */
+    .card::before{
       content:"";
       position:absolute; inset:-2px;
       background: conic-gradient(from 180deg,
-        rgba(124,58,237,.0),
+        rgba(124,58,237,0),
         rgba(124,58,237,.55),
         rgba(6,182,212,.55),
-        rgba(34,197,94,.45),
-        rgba(124,58,237,.0)
+        rgba(124,58,237,0)
       );
       opacity:.22;
       filter: blur(18px);
       z-index:0;
+      pointer-events:none;
     }
 
     .content{
@@ -95,7 +127,7 @@
       display:grid;
       grid-template-columns: 1.2fr .8fr;
       gap:36px;
-      align-items:center;
+      align-items:start;
     }
 
     @media (max-width: 860px){
@@ -106,15 +138,18 @@
       }
     }
 
-    .brand{
+    header.brand{
       display:flex;
       align-items:center;
       gap:14px;
       margin-bottom:18px;
       justify-content:flex-start;
     }
-    @media (max-width: 860px){ .brand{justify-content:center;} }
+    @media (max-width: 860px){
+      header.brand{justify-content:center;}
+    }
 
+    /* Logo jako czysto dekoracyjny placeholder — ukryty przed SR */
     .logo{
       width:54px; height:54px;
       border-radius:16px;
@@ -126,18 +161,36 @@
       position:relative;
       overflow:hidden;
     }
-    .logo:after{
+    .logo::after{
       content:"";
       position:absolute; inset:-40%;
       background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.35), transparent 55%);
       transform: rotate(18deg);
       opacity:.35;
+      pointer-events:none;
     }
     .logo span{
       position:relative;
       font-weight:700;
       letter-spacing:.5px;
-      opacity:.9;
+      opacity:.92;
+    }
+
+    .brand-title{
+      text-align:left;
+    }
+    @media (max-width: 860px){ .brand-title{text-align:center;} }
+
+    .brand-title strong{
+      display:block;
+      font-weight:700;
+      letter-spacing:.2px;
+    }
+    .brand-title small{
+      display:block;
+      color: var(--muted2);
+      font-size: 13px;
+      margin-top:2px;
     }
 
     h1{
@@ -153,7 +206,7 @@
       gap:10px;
       padding:10px 14px;
       border-radius:999px;
-      border:1px solid rgba(255,255,255,.16);
+      border:1px solid rgba(255,255,255,.18);
       background: rgba(255,255,255,.06);
       color: var(--muted);
       font-weight:600;
@@ -161,7 +214,7 @@
     }
     .dot{
       width:10px;height:10px;border-radius:50%;
-      background: linear-gradient(135deg, var(--accent1), var(--accent3));
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
       box-shadow: 0 0 0 4px rgba(124,58,237,.18);
     }
 
@@ -170,7 +223,9 @@
       line-height: 1.65;
       color: var(--muted);
       margin: 0 0 26px;
+      max-width: 58ch; /* czytelność */
     }
+    @media (max-width: 860px){ .sub{margin-left:auto; margin-right:auto;} }
 
     .actions{
       display:flex;
@@ -180,26 +235,28 @@
     }
     @media (max-width: 860px){ .actions{justify-content:center;} }
 
+    /* Linki/przyciski: cel dotykowy >= 44px */
     .btn{
       display:inline-flex;
+      min-height:44px;
       align-items:center;
       justify-content:center;
       gap:10px;
       padding: 12px 16px;
       border-radius: 14px;
-      border:1px solid rgba(255,255,255,.16);
+      border:1px solid rgba(255,255,255,.18);
       color: var(--text);
       text-decoration:none;
       font-weight:700;
       letter-spacing:.2px;
-      transition: transform .12s ease, background .12s ease, border-color .12s ease;
       user-select:none;
       white-space:nowrap;
+      transition: transform .12s ease, filter .12s ease, background .12s ease, border-color .12s ease;
     }
     .btn:active{transform: translateY(1px);}
 
     .btn-primary{
-      border-color: rgba(124,58,237,.45);
+      border-color: rgba(124,58,237,.55);
       background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(6,182,212,.75));
       box-shadow: 0 12px 30px rgba(124,58,237,.25);
     }
@@ -211,7 +268,7 @@
     }
     .btn-ghost:hover{
       background: rgba(255,255,255,.09);
-      border-color: rgba(255,255,255,.22);
+      border-color: rgba(255,255,255,.24);
       color: var(--text);
     }
 
@@ -222,8 +279,7 @@
       line-height:1.6;
     }
 
-    /* panel po prawej */
-    .side{
+    aside.side{
       border:1px solid rgba(255,255,255,.14);
       background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
       border-radius: var(--radius);
@@ -232,17 +288,12 @@
       overflow:hidden;
     }
 
-    .side h2{
-      margin: 6px 0 10px;
-      font-size: 18px;
-      letter-spacing:.2px;
-    }
-
     .pill{
       display:inline-flex;
       align-items:center;
       gap:8px;
       padding: 8px 12px;
+      min-height: 34px;
       border-radius:999px;
       background: rgba(255,255,255,.06);
       border:1px solid rgba(255,255,255,.14);
@@ -252,14 +303,21 @@
       margin-bottom: 10px;
     }
 
-    .list{
+    h2{
+      margin: 6px 0 10px;
+      font-size: 18px;
+      letter-spacing:.2px;
+    }
+
+    ul.list{
       margin: 10px 0 0;
       padding:0;
       list-style:none;
       display:grid;
       gap:10px;
     }
-    .list li{
+
+    ul.list li{
       padding:12px 12px;
       border-radius: 14px;
       border:1px solid rgba(255,255,255,.12);
@@ -269,7 +327,7 @@
       line-height: 1.45;
     }
 
-    .footer{
+    footer.footer{
       position:relative;
       z-index:1;
       padding: 0 56px 20px;
@@ -278,83 +336,118 @@
       align-items:center;
       color: var(--muted2);
       font-size: 12px;
+      gap:12px;
     }
     @media (max-width: 860px){
-      .footer{padding: 0 22px 18px; flex-direction:column; gap:10px;}
+      footer.footer{padding: 0 22px 18px; flex-direction:column;}
     }
 
-    .footer a{
+    footer.footer a{
       color: var(--muted);
       text-decoration:none;
-      border-bottom: 1px dashed rgba(255,255,255,.22);
+      border-bottom: 1px dashed rgba(255,255,255,.28);
     }
-    .footer a:hover{color: var(--text); border-bottom-color: rgba(255,255,255,.45);}
+    footer.footer a:hover{color: var(--text); border-bottom-color: rgba(255,255,255,.48);}
 
-    /* dostępność: redukcja animacji */
+    /* Visually hidden utility */
+    .sr-only{
+      position:absolute;
+      width:1px;height:1px;
+      padding:0;margin:-1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+      white-space:nowrap;
+      border:0;
+    }
+
+    /* Redukcja ruchu */
     @media (prefers-reduced-motion: reduce){
+      *{scroll-behavior:auto !important}
       .btn{transition:none}
+      .card::before{filter:none}
+    }
+
+    /* Wyraźniejsze odstępy przy większym tekście */
+    @media (min-width: 1px){
+      p{max-width: 65ch}
     }
   </style>
 </head>
 
 <body>
+  <a class="skip-link" href="#main">Przejdź do treści</a>
+
   <div class="container">
-    <main class="card" role="main" aria-label="Omicentra landing page">
-      <section class="content">
-        <div>
-          <div class="brand">
-            <div class="logo" aria-label="Logo placeholder">
-              <span>O</span>
-            </div>
-            <div style="text-align:left">
-              <div style="font-weight:700; letter-spacing:.2px;">Omicentra</div>
-              <div style="color:var(--muted2); font-size:13px; margin-top:2px;">Spotlight on bioinformatics</div>
-            </div>
-          </div>
+    <div class="card">
+      <div class="content">
 
-          <h1>Omicentra</h1>
+        <main id="main" tabindex="-1" aria-labelledby="page-title">
+          <header class="brand">
+            <!-- dekoracja: aria-hidden -->
+            <div class="logo" aria-hidden="true">
+              <span aria-hidden="true">O</span>
+            </div>
 
-          <div class="tag">
+            <div class="brand-title">
+              <strong>Omicentra</strong>
+              <small>Spotlight on bioinformatics</small>
+            </div>
+          </header>
+
+          <h1 id="page-title">Omicentra</h1>
+
+          <p class="tag">
             <span class="dot" aria-hidden="true"></span>
             Spotlight on Bioinformatics
-          </div>
+          </p>
 
           <p class="sub">
             Launching soon. Tracking conferences and research trends worldwide — w jednym miejscu, bez chaosu.
           </p>
 
-          <div class="actions">
-            <a class="btn btn-primary" href="/conferences.html" aria-label="Go to conferences">
-              Go to Conferences <span aria-hidden="true">→</span>
+          <nav class="actions" aria-label="Główne akcje">
+            <a class="btn btn-primary" href="/conferences.html">
+              <span>Go to Conferences</span>
+              <span aria-hidden="true">→</span>
+              <span class="sr-only">Przejście do strony z konferencjami</span>
             </a>
-            <a class="btn btn-ghost" href="#about">What is this?</a>
-          </div>
 
-          <div class="meta" id="about">
+            <a class="btn btn-ghost" href="#about">
+              What is this?
+            </a>
+          </nav>
+
+          <p class="meta" id="about">
             Minimal landing page. Podmień logo na SVG/PNG, a teksty na docelowe.
-          </div>
-        </div>
+          </p>
+        </main>
 
-        <aside class="side" aria-label="Highlights panel">
-          <div class="pill">Coming soon • beta</div>
-          <h2>Co będzie na start</h2>
+        <aside class="side" aria-labelledby="side-title">
+          <div class="pill" role="status" aria-live="polite">
+            Coming soon • beta
+          </div>
+
+          <h2 id="side-title">Co będzie na start</h2>
+
           <ul class="list">
             <li><strong>Conferences</strong>: kalendarz + filtry (region, temat, format online/onsite).</li>
             <li><strong>Trends</strong>: szybkie podsumowania kierunków w bioinformatyce i omics.</li>
             <li><strong>Notes</strong>: krótkie „briefy” z linkami do źródeł.</li>
           </ul>
         </aside>
-      </section>
 
-      <div class="footer" aria-label="Footer">
-        <div>© <span id="year"></span> Omicentra</div>
-        <div><a href="/conferences.html">Conferences</a></div>
       </div>
-    </main>
+
+      <footer class="footer" aria-label="Stopka">
+        <div>© <span id="year" aria-label="Aktualny rok"></span> Omicentra</div>
+        <div>
+          <a href="/conferences.html">Conferences</a>
+        </div>
+      </footer>
+    </div>
   </div>
 
   <script>
-    // bez bibliotek, tylko aktualny rok
     document.getElementById("year").textContent = new Date().getFullYear();
   </script>
 </body>
