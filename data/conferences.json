@@ -14,4 +14,19 @@
     "source": "official",
     "last_updated": "2026-02-14"
   }
+  {
+  "id": "ismb-2026",
+  "name": "ISMB 2026",
+  "topic": ["bioinformatics", "systems biology"],
+  "submission_deadline": "2026-02-28",
+  "start_date": "2026-07-10",
+  "end_date": "2026-07-14",
+  "location_city": "Boston",
+  "location_country": "USA",
+  "region": "USA",
+  "format": "onsite",
+  "website": "https://www.iscb.org/ismb2026",
+  "source": "official",
+  "last_updated": "2026-02-14"
+}
 ]
