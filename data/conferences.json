@@ -1,0 +1,17 @@
+[
+  {
+    "id": "eccb-2026",
+    "name": "ECCB 2026",
+    "topic": ["bioinformatics", "computational biology"],
+    "submission_deadline": "2026-03-15",
+    "start_date": "2026-09-05",
+    "end_date": "2026-09-09",
+    "location_city": "Geneva",
+    "location_country": "Switzerland",
+    "region": "Europe",
+    "format": "onsite",
+    "website": "https://eccb2026.org",
+    "source": "official",
+    "last_updated": "2026-02-14"
+  }
+]
