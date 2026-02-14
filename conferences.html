@@ -157,7 +157,14 @@
     .lead{
       color: var(--muted);
       max-width: 72ch;
-      margin: 0 0 22px;
+      margin: 0 0 14px;
+    }
+
+    .status{
+      margin: 10px 0 0;
+      color: var(--muted2);
+      font-size: 13px;
+      min-height: 20px;
     }
 
     .filters{
@@ -231,7 +238,7 @@
 
     .card{
       border:1px solid var(--border);
-      background: rgba(255,255,255,.90);
+      background: rgba(255,255,255,.92);
       border-radius: var(--radius);
       padding: 14px;
       display:flex;
@@ -264,9 +271,10 @@
       font-size: 12px;
       color: var(--muted);
       font-weight:800;
+      text-transform: none;
     }
 
-    .card a{
+    .cta{
       margin-top:auto;
       display:inline-flex;
       min-height:44px;
@@ -301,10 +309,6 @@
       clip:rect(0,0,0,0);
       white-space:nowrap;
       border:0;
-    }
-
-    @media (prefers-reduced-motion: reduce){
-      *{scroll-behavior:auto !important}
     }
   </style>
 </head>
@@ -342,13 +346,6 @@
           <label for="region">Region</label>
           <select id="region">
             <option value="all">All</option>
-            <option value="europe">Europe</option>
-            <option value="north-america">North America</option>
-            <option value="asia">Asia</option>
-            <option value="oceania">Oceania</option>
-            <option value="south-america">South America</option>
-            <option value="africa">Africa</option>
-            <option value="online">Online</option>
           </select>
         </div>
 
@@ -356,12 +353,6 @@
           <label for="topic">Topic</label>
           <select id="topic">
             <option value="all">All</option>
-            <option value="bioinformatics">Bioinformatics</option>
-            <option value="genomics">Genomics</option>
-            <option value="proteomics">Proteomics</option>
-            <option value="metabolomics">Metabolomics</option>
-            <option value="single-cell">Single-cell</option>
-            <option value="systems">Systems biology</option>
           </select>
         </div>
 
@@ -369,9 +360,6 @@
           <label for="format">Format</label>
           <select id="format">
             <option value="all">All</option>
-            <option value="onsite">Onsite</option>
-            <option value="hybrid">Hybrid</option>
-            <option value="online">Online</option>
           </select>
         </div>
 
@@ -381,41 +369,9 @@
         </div>
       </section>
 
-      <section class="grid" aria-label="Conference list">
-        <!-- Replace these cards with real conferences -->
-        <article class="card" data-title="Example Bioinformatics Summit" data-region="europe" data-topic="bioinformatics" data-format="onsite">
-          <h2>Example Bioinformatics Summit</h2>
-          <div class="meta">
-            <span class="chip">Europe</span>
-            <span class="chip">Bioinformatics</span>
-            <span class="chip">Onsite</span>
-            <span class="chip">TBA</span>
-          </div>
-          <a href="#" aria-label="Open conference website: Example Bioinformatics Summit">Conference website</a>
-        </article>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
 
-        <article class="card" data-title="Example Omics Conference" data-region="north-america" data-topic="genomics" data-format="hybrid">
-          <h2>Example Omics Conference</h2>
-          <div class="meta">
-            <span class="chip">North America</span>
-            <span class="chip">Genomics</span>
-            <span class="chip">Hybrid</span>
-            <span class="chip">TBA</span>
-          </div>
-          <a href="#" aria-label="Open conference website: Example Omics Conference">Conference website</a>
-        </article>
-
-        <article class="card" data-title="Example Single-Cell Forum" data-region="online" data-topic="single-cell" data-format="online">
-          <h2>Example Single-Cell Forum</h2>
-          <div class="meta">
-            <span class="chip">Online</span>
-            <span class="chip">Single-cell</span>
-            <span class="chip">Online</span>
-            <span class="chip">TBA</span>
-          </div>
-          <a href="#" aria-label="Open conference website: Example Single-Cell Forum">Conference website</a>
-        </article>
-      </section>
+      <section class="grid" id="grid" aria-label="Conference list"></section>
     </main>
 
     <footer aria-label="Footer">
@@ -427,47 +383,217 @@
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
 
+    const DATA_URL = "/data/conferences.json";
+
     const q = document.getElementById("q");
-    const region = document.getElementById("region");
-    const topic = document.getElementById("topic");
-    const format = document.getElementById("format");
-    const reset = document.getElementById("reset");
-    const cards = Array.from(document.querySelectorAll(".card"));
+    const regionSel = document.getElementById("region");
+    const topicSel = document.getElementById("topic");
+    const formatSel = document.getElementById("format");
+    const resetBtn = document.getElementById("reset");
+
+    const grid = document.getElementById("grid");
+    const statusEl = document.getElementById("status");
+
+    /** @type {Array<any>} */
+    let conferences = [];
+
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+
+    function formatDate(iso){
+      if (!iso) return "TBA";
+      const d = new Date(iso + "T00:00:00");
+      if (Number.isNaN(d.getTime())) return "TBA";
+      return d.toLocaleDateString(undefined, { year:"numeric", month:"short", day:"2-digit" });
+    }
+
+    function toKey(s){
+      return String(s || "").trim().toLowerCase().replace(/\s+/g, "-");
+    }
+
+    function uniqSorted(arr){
+      return Array.from(new Set(arr)).sort((a,b)=>a.localeCompare(b));
+    }
+
+    function normalizeRegion(v){
+      const x = String(v || "").trim();
+      if (!x) return "Unknown";
+      if (x.toLowerCase() === "usa") return "USA";
+      return x;
+    }
+
+    function normalizeFormat(v){
+      const x = String(v || "").trim().toLowerCase();
+      if (!x) return "unknown";
+      return x;
+    }
+
+    function topicList(c){
+      const t = Array.isArray(c.topic) ? c.topic : (c.topic ? [c.topic] : []);
+      return t.map(x => String(x)).filter(Boolean);
+    }
+
+    function buildSelect(selectEl, values){
+      const current = selectEl.value || "all";
+      selectEl.innerHTML = '<option value="all">All</option>';
+      for (const v of values){
+        const opt = document.createElement("option");
+        opt.value = toKey(v);
+        opt.textContent = v;
+        selectEl.appendChild(opt);
+      }
+      if ([...selectEl.options].some(o => o.value === current)) selectEl.value = current;
+    }
+
+    function renderCard(c){
+      const name = c.name || "Untitled";
+      const website = c.website || "#";
+      const region = normalizeRegion(c.region);
+      const format = normalizeFormat(c.format);
+      const topics = topicList(c);
+
+      const location = (c.location_city && c.location_country)
+        ? `${c.location_city}, ${c.location_country}`
+        : (c.location_country || c.location_city || "TBA");
+
+      const dateRange = (c.start_date || c.end_date)
+        ? `${formatDate(c.start_date)} – ${formatDate(c.end_date)}`
+        : "TBA";
+
+      const deadline = c.submission_deadline ? formatDate(c.submission_deadline) : null;
+
+      const chips = [
+        region,
+        format.toUpperCase(),
+        ...topics.slice(0, 2).map(t => t)
+      ];
+
+      const chipHtml = chips.map(x => `<span class="chip">${escapeHtml(x)}</span>`).join("");
+
+      const extra = deadline ? `<span class="chip">Deadline: ${escapeHtml(deadline)}</span>` : "";
+
+      const article = document.createElement("article");
+      article.className = "card";
+      article.dataset.title = String(name).toLowerCase();
+      article.dataset.region = toKey(region);
+      article.dataset.format = toKey(format);
+      article.dataset.topic = topics.map(t => toKey(t)).join("|");
+
+      article.innerHTML = `
+        <h2>${escapeHtml(name)}</h2>
+        <div class="meta">
+          ${chipHtml}
+          <span class="chip">${escapeHtml(location)}</span>
+          <span class="chip">${escapeHtml(dateRange)}</span>
+          ${extra}
+        </div>
+        <a class="cta" href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer"
+           aria-label="Open conference website: ${escapeHtml(name)}">
+          Conference website
+        </a>
+      `;
+      return article;
+    }
 
     function applyFilters(){
       const qv = q.value.trim().toLowerCase();
-      const rv = region.value;
-      const tv = topic.value;
-      const fv = format.value;
+      const rv = regionSel.value;
+      const tv = topicSel.value;
+      const fv = formatSel.value;
 
-      for (const card of cards){
-        const title = (card.dataset.title || "").toLowerCase();
+      let shown = 0;
+
+      for (const card of Array.from(grid.children)){
+        const title = card.dataset.title || "";
         const r = card.dataset.region || "all";
-        const t = card.dataset.topic || "all";
         const f = card.dataset.format || "all";
+        const topics = (card.dataset.topic || "").split("|").filter(Boolean);
 
         const matchQ = qv === "" || title.includes(qv);
         const matchR = rv === "all" || r === rv;
-        const matchT = tv === "all" || t === tv;
         const matchF = fv === "all" || f === fv;
+        const matchT = tv === "all" || topics.includes(tv);
 
-        card.style.display = (matchQ && matchR && matchT && matchF) ? "" : "none";
+        const ok = matchQ && matchR && matchT && matchF;
+        card.style.display = ok ? "" : "none";
+        if (ok) shown++;
       }
+
+      statusEl.textContent = `${shown} conference${shown === 1 ? "" : "s"} shown`;
+    }
+
+    async function loadData(){
+      statusEl.textContent = "Loading conferences…";
+
+      const res = await fetch(DATA_URL, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Failed to load ${DATA_URL} (${res.status})`);
+
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error("Invalid JSON: expected an array");
+
+      conferences = data;
+
+      const regions = uniqSorted(conferences.map(c => normalizeRegion(c.region)).filter(Boolean));
+      const formats = uniqSorted(conferences.map(c => normalizeFormat(c.format)).filter(Boolean).map(f => f.toUpperCase()));
+      const topics = uniqSorted(conferences.flatMap(c => topicList(c)).filter(Boolean));
+
+      buildSelect(regionSel, regions);
+      buildSelect(formatSel, formats);
+      buildSelect(topicSel, topics);
+
+      // Map select values back to data keys for filtering
+      // regionSel uses toKey(region)
+      // topicSel uses toKey(topic)
+      // formatSel uses toKey(UPPERCASE) but card stores toKey(lowercase), so normalize:
+      formatSel.addEventListener("change", () => {
+        // convert displayed option to key of lowercase format
+        const optText = formatSel.options[formatSel.selectedIndex]?.textContent || "All";
+        formatSel.value = optText === "All" ? "all" : toKey(optText.toLowerCase());
+        applyFilters();
+      }, { once: true });
+
+      // Render cards
+      grid.innerHTML = "";
+      for (const c of conferences){
+        grid.appendChild(renderCard(c));
+      }
+
+      // Fix initial format select values to use lowercase keys
+      // Replace options values with lowercase keys
+      for (const opt of Array.from(formatSel.options)){
+        if (opt.value === "all") continue;
+        opt.value = toKey(opt.textContent.toLowerCase());
+      }
+
+      applyFilters();
     }
 
     q.addEventListener("input", applyFilters);
-    region.addEventListener("change", applyFilters);
-    topic.addEventListener("change", applyFilters);
-    format.addEventListener("change", applyFilters);
+    regionSel.addEventListener("change", applyFilters);
+    topicSel.addEventListener("change", applyFilters);
+    formatSel.addEventListener("change", applyFilters);
 
-    reset.addEventListener("click", () => {
+    resetBtn.addEventListener("click", () => {
       q.value = "";
-      region.value = "all";
-      topic.value = "all";
-      format.value = "all";
+      regionSel.value = "all";
+      topicSel.value = "all";
+      formatSel.value = "all";
       applyFilters();
       q.focus();
+    });
+
+    loadData().catch(err => {
+      console.error(err);
+      statusEl.textContent = "Failed to load conferences.";
+      grid.innerHTML = "";
     });
   </script>
 </body>
 </html>
+
