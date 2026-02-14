@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Omicentra — Conferences</title>
+  <style>
+    body{font-family:Montserrat,Arial,sans-serif;margin:0;background:#fff;color:#1C1F23}
+    header{max-width:1100px;margin:0 auto;padding:26px 22px;display:flex;justify-content:space-between;align-items:center}
+    a{color:inherit;text-decoration:none}
+    nav a{margin-left:16px;color:#444}
+    nav a[aria-current="page"]{color:#1C1F23;font-weight:600;text-decoration:underline}
+    main{max-width:1100px;margin:0 auto;padding:10px 22px 80px}
+    h1{font-size:42px;margin:18px 0 10px}
+    .sub{color:#666;margin:0 0 20px;line-height:1.5}
+
+    .controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:18px 0 18px}
+    input,select{padding:10px 12px;border:1px solid #ddd;border-radius:10px;font-size:14px}
+    table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid #eee;border-radius:14px;overflow:hidden}
+    th,td{padding:14px 12px;border-bottom:1px solid #f0f0f0;text-align:left;font-size:14px}
+    th{background:#fafafa;font-weight:600}
+    tr:last-child td{border-bottom:none}
+    .pill{display:inline-block;padding:4px 10px;border:1px solid #e6e6e6;border-radius:999px;font-size:12px;color:#555}
+    .link{color:#1a73e8}
+    .muted{color:#777}
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/" style="font-weight:700;">Omicentra</a>
+    <nav>
+      <a href="/">Home</a>
+      <a href="/conferences.html" aria-current="page">Conferences</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Upcoming Conferences</h1>
+    <p class="sub">Browse bioinformatics conferences and sort by submission deadlines.</p>
+
+    <div class="controls">
+      <input id="q" type="search" placeholder="Search (name, city, country)..." />
+      <select id="region">
+        <option value="">All regions</option>
+        <option>Europe</option>
+        <option>USA</option>
+        <option>Asia</option>
+        <option>Other</option>
+      </select>
+      <select id="sort">
+        <option value="deadline">Sort: deadline</option>
+        <option value="start">Sort: start date</option>
+        <option value="name">Sort: name</option>
+      </select>
+    </div>
+
+    <table aria-label="Conference list">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Submission deadline</th>
+          <th>Dates</th>
+          <th>Location</th>
+          <th>Format</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="rows">
+        <tr><td colspan="6" class="muted">Loading…</td></tr>
+      </tbody>
+    </table>
+  </main>
+
+  <script>
+    const elRows = document.getElementById('rows');
+    const elQ = document.getElementById('q');
+    const elRegion = document.getElementById('region');
+    const elSort = document.getElementById('sort');
+
+    let data = [];
+
+    function fmtDate(iso){
+      if(!iso) return "";
+      const d = new Date(iso+"T00:00:00");
+      return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'2-digit'});
+    }
+
+    function render(){
+      const q = (elQ.value || "").toLowerCase().trim();
+      const region = elRegion.value;
+
+      let rows = data.filter(x=>{
+        const hay = `${x.name||""} ${x.location_city||""} ${x.location_country||""}`.toLowerCase();
+        const okQ = !q || hay.includes(q);
+        const okR = !region || (x.region===region);
+        return okQ && okR;
+      });
+
+      const sort = elSort.value;
+      rows.sort((a,b)=>{
+        if(sort==="name") return (a.name||"").localeCompare(b.name||"");
+        if(sort==="start") return (a.start_date||"").localeCompare(b.start_date||"");
+        return (a.submission_deadline||"").localeCompare(b.submission_deadline||"");
+      });
+
+      if(rows.length===0){
+        elRows.innerHTML = `<tr><td colspan="6" class="muted">No results.</td></tr>`;
+        return;
+      }
+
+      elRows.innerHTML = rows.map(x=>`
+        <tr>
+          <td><strong>${x.name||""}</strong><div class="muted">${(x.topic||[]).join(", ")}</div></td>
+          <td>${fmtDate(x.submission_deadline)}</td>
+          <td>${fmtDate(x.start_date)} – ${fmtDate(x.end_date)}</td>
+          <td>${x.location_city||""}, ${x.location_country||""}</td>
+          <td><span class="pill">${x.format||""}</span></td>
+          <td><a class="link" href="${x.website||"#"}" target="_blank" rel="noopener">Website</a></td>
+        </tr>
+      `).join("");
+    }
+
+    async function init(){
+      try{
+        const res = await fetch('/data/conferences.json', {cache:'no-store'});
+        data = await res.json();
+        render();
+      }catch(e){
+        elRows.innerHTML = `<tr><td colspan="6" class="muted">Could not load data/conferences.json</td></tr>`;
+      }
+    }
+
+    elQ.addEventListener('input', render);
+    elRegion.addEventListener('change', render);
+    elSort.addEventListener('change', render);
+
+    init();
+  </script>
+</body>
+</html>
