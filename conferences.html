@@ -151,6 +151,13 @@
       return d.toLocaleDateString(undefined, { year:"numeric", month:"short", day:"2-digit" });
     }
 
+    // Rules:
+    // - Same year: show year once at the end
+    // - Same month (and same year): show start day only, then end day+month, then year
+    //   Example: 10 – 14 Jul 2026
+    // - Same year but different months: show day+month for both, year once
+    //   Example: 28 Feb – 02 Mar 2026
+    // - Different years: full dates on both sides
     function formatDateRange(startIso, endIso){
       if (!startIso && !endIso) return "TBA";
       if (startIso && !endIso) return formatDate(startIso);
@@ -161,11 +168,17 @@
       if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "TBA";
 
       const sameYear = start.getFullYear() === end.getFullYear();
+      const sameMonth = sameYear && start.getMonth() === end.getMonth();
 
       const sDay = start.toLocaleDateString(undefined, { day:"2-digit" });
       const sMon = start.toLocaleDateString(undefined, { month:"short" });
       const eDay = end.toLocaleDateString(undefined, { day:"2-digit" });
       const eMon = end.toLocaleDateString(undefined, { month:"short" });
+
+      if (sameMonth){
+        const year = start.getFullYear();
+        return `${sDay} – ${eDay} ${eMon} ${year}`;
+      }
 
       if (sameYear){
         const year = start.getFullYear();
@@ -312,7 +325,7 @@
       const fv = formatSel.value;
       const dv = deadlineSel.value;
 
-      let shown = 0;
+      let count = 0;
 
       for (const node of nodesForFiltering()){
         const title = node.dataset.title || "";
@@ -330,10 +343,10 @@
         const ok = matchQ && matchR && matchT && matchF && matchD;
 
         node.style.display = ok ? "" : "none";
-        if (ok) shown++;
+        if (ok) count++;
       }
 
-      statusEl.textContent = `${shown} conference${shown === 1 ? "" : "s"}`;
+      statusEl.textContent = `${count} conference${count === 1 ? "" : "s"}`;
     }
 
     function setView(view){
