@@ -301,6 +301,19 @@ input[type="search"], select{
   text-transform: none;
 }
 
+/* Deadline chip */
+.chip--deadline{
+  border-color: rgba(124,58,237,.22);
+  background: rgba(124,58,237,.06);
+}
+
+/* Urgent deadline chip */
+.chip--urgent{
+  border-color: rgba(6,182,212,.40);
+  background: rgba(6,182,212,.10);
+}
+
+/* Card CTA */
 .cta{
   margin-top:auto;
   display:inline-flex;
@@ -316,6 +329,16 @@ input[type="search"], select{
   letter-spacing:.2px;
 }
 
+/* Smaller card CTA */
+.cta--small{
+  align-self:flex-start;
+  min-height:38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  letter-spacing: .15px;
+}
+
 /* Card variants by format */
 .card--onsite{
   background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(17,24,39,.02));
@@ -325,6 +348,11 @@ input[type="search"], select{
 .card--remote{
   background: linear-gradient(180deg, rgba(6,182,212,.10), rgba(255,255,255,.94));
   border-color: rgba(6,182,212,.28);
+}
+
+/* Subtle urgent card outline */
+.card--urgent{
+  box-shadow: 0 0 0 2px rgba(6,182,212,.18);
 }
 
 /* Table view */
@@ -354,6 +382,42 @@ thead th{
   padding: 12px 12px;
   font-weight: 900;
   z-index:1;
+}
+
+/* Sortable header buttons */
+.thbtn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  border:0;
+  background:transparent;
+  padding: 6px 8px;
+  margin: -6px -8px;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 900;
+  letter-spacing: .2px;
+  color: inherit;
+  cursor: pointer;
+}
+.thbtn:hover{
+  background: rgba(17,24,39,.03);
+}
+
+#th-name[aria-sort="ascending"] .thbtn::after,
+#th-dates[aria-sort="ascending"] .thbtn::after,
+#th-deadline[aria-sort="ascending"] .thbtn::after{
+  content:"▲";
+  font-size: 11px;
+  opacity:.7;
+}
+
+#th-name[aria-sort="descending"] .thbtn::after,
+#th-dates[aria-sort="descending"] .thbtn::after,
+#th-deadline[aria-sort="descending"] .thbtn::after{
+  content:"▼";
+  font-size: 11px;
+  opacity:.7;
 }
 
 tbody td{
