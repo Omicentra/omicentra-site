@@ -1,0 +1,13 @@
+{
+  "name": "omicentra-tests",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.9.0",
+    "@playwright/test": "^1.41.2",
+    "http-server": "^14.1.1"
+  }
+}
