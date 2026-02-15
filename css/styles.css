@@ -214,7 +214,7 @@ input[type="search"], select{
   color: var(--text);
 }
 
-/* View switch (segmented control) */
+/* View switch */
 .viewbar{
   margin-top: 12px;
   display:flex;
@@ -271,13 +271,39 @@ input[type="search"], select{
   display:flex;
   flex-direction:column;
   gap:10px;
+  transition: background .12s ease, border-color .12s ease, box-shadow .12s ease;
 }
 
-.card h2{
-  font-size: 16px;
+.card:hover{
+  background: rgba(255,255,255,.98);
+  border-color: rgba(17,24,39,.18);
+}
+
+.card-title{
   margin:0;
+  font-size: 16px;
   line-height:1.25;
   letter-spacing:-0.2px;
+}
+
+.card-title-link{
+  color: var(--text);
+  text-decoration:none;
+  font-weight: 900;
+  display:inline-block;
+}
+
+.card-title-link:hover{
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.card-title-link:focus-visible{
+  outline:2px solid var(--focus);
+  outline-offset:3px;
+  border-radius: 10px;
+  box-shadow: 0 0 0 6px var(--focusRing);
 }
 
 .meta{
@@ -307,36 +333,10 @@ input[type="search"], select{
   background: rgba(124,58,237,.06);
 }
 
-/* Urgent deadline chip */
+/* Urgent deadline chip (purple) */
 .chip--urgent{
-  border-color: rgba(6,182,212,.40);
-  background: rgba(6,182,212,.10);
-}
-
-/* Card CTA */
-.cta{
-  margin-top:auto;
-  display:inline-flex;
-  min-height:44px;
-  align-items:center;
-  justify-content:center;
-  border-radius: 14px;
-  border:1px solid rgba(124,58,237,.30);
-  background: linear-gradient(135deg, rgba(124,58,237,.14), rgba(6,182,212,.12));
-  text-decoration:none;
-  color: var(--text);
-  font-weight:900;
-  letter-spacing:.2px;
-}
-
-/* Smaller card CTA */
-.cta--small{
-  align-self:flex-start;
-  min-height:38px;
-  padding: 0 12px;
-  border-radius: 12px;
-  font-size: 13px;
-  letter-spacing: .15px;
+  border-color: rgba(124,58,237,.45);
+  background: rgba(124,58,237,.12);
 }
 
 /* Card variants by format */
@@ -350,9 +350,9 @@ input[type="search"], select{
   border-color: rgba(6,182,212,.28);
 }
 
-/* Subtle urgent card outline */
+/* Subtle urgent outline */
 .card--urgent{
-  box-shadow: 0 0 0 2px rgba(6,182,212,.18);
+  box-shadow: 0 0 0 2px rgba(124,58,237,.16);
 }
 
 /* Table view */
@@ -384,7 +384,7 @@ thead th{
   z-index:1;
 }
 
-/* Sortable header buttons */
+/* Sort buttons */
 .thbtn{
   display:inline-flex;
   align-items:center;
