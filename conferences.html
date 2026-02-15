@@ -222,11 +222,14 @@
         region.toLowerCase() !== locationCountry.toLowerCase();
 
       const chips = [
-        ...(showRegionChip ? [region] : []),
-        ...topics.slice(0, 2)
-      ];
+        conferenceLocation(c),
+        conferenceDateRange(c),
+        c.submission_deadline ? `Deadline: ${formatDate(c.submission_deadline)}` : null
+      ].filter(Boolean);
 
-      const chipHtml = chips.map(x => `<span class="chip">${escapeHtml(x)}</span>`).join("");
+      const chipHtml = chips
+        .map(x => `<span class="chip">${escapeHtml(x)}</span>`)
+        .join("");
 
       const article = document.createElement("article");
       article.className = "card";
