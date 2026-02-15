@@ -91,13 +91,23 @@
         <table>
           <thead>
             <tr>
-              <th scope="col">Conference</th>
-              <th scope="col">Dates</th>
+              <th scope="col" id="th-name" aria-sort="none">
+                <button class="thbtn" type="button" data-sort="name" aria-label="Sort by conference name">Conference</button>
+              </th>
+
+              <th scope="col" id="th-dates" aria-sort="none">
+                <button class="thbtn" type="button" data-sort="dates" aria-label="Sort by dates">Dates</button>
+              </th>
+
               <th scope="col">Location</th>
               <th scope="col">Region</th>
               <th scope="col">Format</th>
               <th scope="col">Topics</th>
-              <th scope="col">Deadline</th>
+
+              <th scope="col" id="th-deadline" aria-sort="ascending">
+                <button class="thbtn" type="button" data-sort="deadline" aria-label="Sort by deadline">Deadline</button>
+              </th>
+
               <th scope="col">Website</th>
             </tr>
           </thead>
@@ -116,6 +126,7 @@
     document.getElementById("year").textContent = new Date().getFullYear();
 
     const DATA_URL = "/data/conferences.json";
+    const URGENT_DAYS = 30;
 
     const q = document.getElementById("q");
     const regionSel = document.getElementById("region");
@@ -132,8 +143,16 @@
     const tbody = document.getElementById("tbody");
     const statusEl = document.getElementById("status");
 
+    const thName = document.getElementById("th-name");
+    const thDates = document.getElementById("th-dates");
+    const thDeadline = document.getElementById("th-deadline");
+
     let conferences = [];
     let currentView = "cards"; // "cards" | "table"
+
+    // Default: sort by deadline ascending
+    let sortKey = "deadline";  // "deadline" | "dates" | "name"
+    let sortDir = "asc";       // "asc" | "desc"
 
     function escapeHtml(s){
       return String(s)
@@ -240,26 +259,56 @@
       return c.submission_deadline ? formatDate(c.submission_deadline) : "—";
     }
 
+    function todayMidnight(){
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    }
+
+    function deadlineUrgency(iso){
+      if (!iso) return { isUrgent:false, days:null };
+      const d = Date.parse(iso + "T00:00:00");
+      if (Number.isNaN(d)) return { isUrgent:false, days:null };
+
+      const diffDays = Math.floor((d - todayMidnight()) / (24*60*60*1000));
+      const isUrgent = diffDays >= 0 && diffDays <= URGENT_DAYS;
+      return { isUrgent, days: diffDays };
+    }
+
     function renderCard(c){
       const name = c.name || "Untitled";
       const website = c.website || "#";
       const format = normalizeFormat(c.format);
 
-      const chips = [
-        conferenceLocation(c),
-        conferenceDateRange(c),
-        c.submission_deadline ? `Deadline: ${formatDate(c.submission_deadline)}` : null
-      ].filter(Boolean);
+      const { isUrgent } = deadlineUrgency(c.submission_deadline);
+
+      const chips = [];
+
+      // Location
+      chips.push({ text: conferenceLocation(c), cls: "chip" });
+
+      // Dates
+      chips.push({ text: conferenceDateRange(c), cls: "chip" });
+
+      // Deadline (optional)
+      if (c.submission_deadline){
+        const text = `Deadline: ${formatDate(c.submission_deadline)}`;
+        chips.push({ text, cls: `chip chip--deadline${isUrgent ? " chip--urgent" : ""}` });
+      }
 
       const chipHtml = chips
-        .map(x => `<span class="chip">${escapeHtml(x)}</span>`)
+        .filter(x => x.text && x.text !== "TBA")
+        .map(x => `<span class="${x.cls}">${escapeHtml(x.text)}</span>`)
         .join("");
 
       const article = document.createElement("article");
       article.className = "card";
 
+      // Color by format
       const isOnsite = (format === "onsite");
       article.classList.add(isOnsite ? "card--onsite" : "card--remote");
+
+      // Urgent styling on card (subtle)
+      if (isUrgent) article.classList.add("card--urgent");
 
       article.dataset.title = String(name).toLowerCase();
       article.dataset.region = toKey(normalizeRegion(c.region));
@@ -272,9 +321,9 @@
         <div class="meta">
           ${chipHtml}
         </div>
-        <a class="cta" href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer"
+        <a class="cta cta--small" href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer"
            aria-label="Open conference website: ${escapeHtml(name)}">
-          Conference website
+          Website
         </a>
       `;
       return article;
@@ -364,8 +413,84 @@
       try { localStorage.setItem("omicentra_view", view); } catch {}
     }
 
+    function sortConferences(){
+      const dir = sortDir === "asc" ? 1 : -1;
+
+      conferences.sort((a, b) => {
+        if (sortKey === "name"){
+          const an = String(a.name || "").toLowerCase();
+          const bn = String(b.name || "").toLowerCase();
+          return an.localeCompare(bn) * dir;
+        }
+
+        if (sortKey === "dates"){
+          const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
+          const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
+          if (as !== bs) return (as - bs) * dir;
+
+          const ae = a.end_date ? Date.parse(a.end_date + "T00:00:00") : Infinity;
+          const be = b.end_date ? Date.parse(b.end_date + "T00:00:00") : Infinity;
+          return (ae - be) * dir;
+        }
+
+        // deadline
+        const ad = a.submission_deadline ? Date.parse(a.submission_deadline + "T00:00:00") : Infinity;
+        const bd = b.submission_deadline ? Date.parse(b.submission_deadline + "T00:00:00") : Infinity;
+        return (ad - bd) * dir;
+      });
+    }
+
+    function updateAriaSort(){
+      const none = "none";
+      const asc = "ascending";
+      const desc = "descending";
+
+      thName.setAttribute("aria-sort", sortKey === "name" ? (sortDir === "asc" ? asc : desc) : none);
+      thDates.setAttribute("aria-sort", sortKey === "dates" ? (sortDir === "asc" ? asc : desc) : none);
+      thDeadline.setAttribute("aria-sort", sortKey === "deadline" ? (sortDir === "asc" ? asc : desc) : none);
+    }
+
+    function rerender(){
+      grid.innerHTML = "";
+      tbody.innerHTML = "";
+      for (const c of conferences){
+        grid.appendChild(renderCard(c));
+        tbody.appendChild(renderRow(c));
+      }
+      updateAriaSort();
+      applyFilters();
+    }
+
+    function setSort(key){
+      if (sortKey === key){
+        sortDir = (sortDir === "asc") ? "desc" : "asc";
+      } else {
+        sortKey = key;
+        sortDir = "asc";
+      }
+
+      // Default direction preference:
+      // deadlines: asc (soonest first) on first click
+      if (key === "deadline" && sortKey === key && sortDir === "asc"){
+        // already correct
+      }
+
+      sortConferences();
+      rerender();
+    }
+
+    function attachSortHandlers(){
+      const buttons = Array.from(document.querySelectorAll(".thbtn[data-sort]"));
+      for (const b of buttons){
+        b.addEventListener("click", () => {
+          const key = b.getAttribute("data-sort");
+          if (key === "name" || key === "dates" || key === "deadline") setSort(key);
+        });
+      }
+    }
+
     async function loadData(){
-      statusEl.textContent = "Loading conferences…";
+      statusEl.textContent = "Loading…";
 
       const res = await fetch(DATA_URL, { cache: "no-store" });
       if (!res.ok) throw new Error(`Failed to load ${DATA_URL} (${res.status})`);
@@ -373,12 +498,9 @@
       const data = await res.json();
       if (!Array.isArray(data)) throw new Error("Invalid JSON: expected an array");
 
-      conferences = data.slice().sort((a, b) => {
-        const da = a.submission_deadline ? Date.parse(a.submission_deadline) : Infinity;
-        const db = b.submission_deadline ? Date.parse(b.submission_deadline) : Infinity;
-        return da - db;
-      });
+      conferences = data.slice();
 
+      // Build filters
       const regions = uniqSorted(conferences.map(c => normalizeRegion(c.region)).filter(Boolean));
       const formats = uniqSorted(conferences.map(c => normalizeFormat(c.format)).filter(Boolean).map(f => f.toUpperCase()));
       const topics = uniqSorted(conferences.flatMap(c => topicList(c)).filter(Boolean));
@@ -394,16 +516,20 @@
         formatSel.appendChild(opt);
       }
 
-      grid.innerHTML = "";
-      tbody.innerHTML = "";
-      for (const c of conferences){
-        grid.appendChild(renderCard(c));
-        tbody.appendChild(renderRow(c));
-      }
+      // Default sort: deadline asc
+      sortKey = "deadline";
+      sortDir = "asc";
+      sortConferences();
 
+      // Render
+      rerender();
+
+      // View restore
       let saved = "cards";
       try { saved = localStorage.getItem("omicentra_view") || "cards"; } catch {}
       setView(saved === "table" ? "table" : "cards");
+
+      attachSortHandlers();
     }
 
     q.addEventListener("input", applyFilters);
