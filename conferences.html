@@ -729,7 +729,11 @@
       const data = await res.json();
       if (!Array.isArray(data)) throw new Error("Invalid JSON: expected an array");
 
-      conferences = data;
+    conferences = data.slice().sort((a, b) => {
+      const da = a.submission_deadline ? Date.parse(a.submission_deadline) : Infinity;
+      const db = b.submission_deadline ? Date.parse(b.submission_deadline) : Infinity;
+      return da - db;
+    });
 
       const regions = uniqSorted(conferences.map(c => normalizeRegion(c.region)).filter(Boolean));
       const formats = uniqSorted(conferences.map(c => normalizeFormat(c.format)).filter(Boolean).map(f => f.toUpperCase()));
