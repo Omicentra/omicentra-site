@@ -4,13 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Omicentra | Conferences</title>
-  <meta name="description" content="A curated list of bioinformatics and omics conferences with simple filtering." />
+  <meta name="description" content="Find where bioinformatics happens next. Track conferences. Never miss a deadline." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- External CSS -->
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 
@@ -86,10 +85,8 @@
         <p class="status" id="status" role="status" aria-live="polite"></p>
       </div>
 
-      <!-- Cards view -->
       <section class="grid" id="grid" aria-label="Conference cards"></section>
 
-      <!-- Table view -->
       <section class="tablewrap" id="tablewrap" aria-label="Conference table" hidden>
         <table>
           <thead>
@@ -216,7 +213,19 @@
       const topics = topicList(c);
 
       // Cards: remove format chip to keep cards compact
-      const chips = [ region, ...topics.slice(0, 2) ];
+      // Also avoid redundant country chip when location is "City, Country" and region == country
+      const locationCountry = String(c.location_country || "").trim();
+      const hasCity = String(c.location_city || "").trim() !== "";
+      const showRegionChip =
+        !locationCountry ||
+        !hasCity ||
+        region.toLowerCase() !== locationCountry.toLowerCase();
+
+      const chips = [
+        ...(showRegionChip ? [region] : []),
+        ...topics.slice(0, 2)
+      ];
+
       const chipHtml = chips.map(x => `<span class="chip">${escapeHtml(x)}</span>`).join("");
 
       const article = document.createElement("article");
