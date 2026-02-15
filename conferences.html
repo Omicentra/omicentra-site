@@ -1,363 +1,263 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Omicentra — Conferences</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Omicentra | Conferences</title>
+<meta name="description" content="Find where bioinformatics happens next. Track conferences. Never miss a deadline." />
 
-  <style>
-    :root{
-      --bg:#ffffff;
-      --text:#1C1F23;
-      --muted:#58606a;
-      --border:#e8ebef;
-      --card:#ffffff;
-      --soft:#f6f7f9;
-      --link:#1a73e8;
-      --shadow: 0 8px 24px rgba(16,24,40,.06);
-      --radius:16px;
-    }
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
 
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family:Montserrat, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
-
-    a{color:var(--link); text-decoration:none}
-    a:hover{text-decoration:underline}
-    .wrap{max-width:1120px; margin:0 auto; padding:0 20px}
-
-    /* Top bar */
-    header{
-      position:sticky; top:0; z-index:10;
-      background:rgba(255,255,255,.92);
-      backdrop-filter: blur(10px);
-      border-bottom:1px solid var(--border);
-    }
-    .topbar{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:14px 0;
-    }
-    .brand{
-      display:flex; align-items:center; gap:10px;
-      font-weight:700;
-      letter-spacing:.2px;
-    }
-    .dot{
-      width:10px;height:10px;border-radius:50%;
-      background:linear-gradient(135deg,#14A38B,#3D7BDB,#7757AD);
-    }
-    nav a{
-      color:var(--muted);
-      margin-left:14px;
-      font-size:14px;
-    }
-    nav a[aria-current="page"]{
-      color:var(--text);
-      font-weight:600;
-      text-decoration:underline;
-      text-underline-offset:6px;
-    }
-
-    /* Hero */
-    .hero{padding:34px 0 18px}
-    h1{font-size:40px; line-height:1.1; margin:0 0 10px}
-    .lead{color:var(--muted); margin:0; max-width:72ch; line-height:1.6}
-
-    /* Controls */
-    .controls{
-      margin:18px 0 18px;
-      padding:14px;
-      background:var(--soft);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .control{
-      display:flex; flex-direction:column; gap:6px;
-      min-width: 200px;
-    }
-    label{font-size:12px; color:var(--muted)}
-    input, select{
-      padding:10px 12px;
-      border:1px solid var(--border);
-      border-radius:12px;
-      background:#fff;
-      font-size:14px;
-      color:var(--text);
-      outline:none;
-    }
-    input:focus, select:focus{
-      border-color:#b9c3d1;
-      box-shadow:0 0 0 3px rgba(26,115,232,.12);
-    }
-
-    .stats{
-      display:flex; align-items:center; gap:10px;
-      margin-left:auto;
-      color:var(--muted);
-      font-size:13px;
-    }
-    .pill{
-      display:inline-flex; align-items:center; gap:6px;
-      padding:6px 10px;
-      border:1px solid var(--border);
-      border-radius:999px;
-      background:#fff;
-      color:var(--muted);
-      font-size:12px;
-    }
-
-    /* Cards grid */
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap:14px;
-      padding: 6px 0 70px;
-    }
-    .card{
-      grid-column: span 12;
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      box-shadow: var(--shadow);
-      padding:16px;
-      display:flex;
-      gap:14px;
-      align-items:flex-start;
-    }
-
-    .badge{
-      flex:0 0 auto;
-      width:44px;height:44px;border-radius:14px;
-      background:linear-gradient(135deg,#14A38B,#3D7BDB,#7757AD);
-      opacity:.9;
-    }
-
-    .meta{flex:1 1 auto; min-width:0;}
-    .titleRow{
-      display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
-    }
-    .name{
-      font-size:18px; font-weight:700; margin:0;
-    }
-    .topics{
-      margin-top:6px;
-      color:var(--muted);
-      font-size:13px;
-      line-height:1.4;
-    }
-
-    .right{
-      flex:0 0 auto;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      align-items:flex-end;
-      min-width: 210px;
-    }
-
-    .kv{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:6px;
-      width:100%;
-      padding:10px 12px;
-      background:var(--soft);
-      border:1px solid var(--border);
-      border-radius:14px;
-      color:var(--muted);
-      font-size:13px;
-    }
-    .kv strong{color:var(--text); font-weight:600}
-    .btn{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid var(--border);
-      background:#fff;
-      font-size:13px;
-      color:var(--text);
-      width:100%;
-      text-decoration:none;
-    }
-    .btn:hover{
-      border-color:#cbd5e1;
-      text-decoration:none;
-    }
-
-    .empty{
-      border:1px dashed var(--border);
-      border-radius:var(--radius);
-      padding:26px;
-      color:var(--muted);
-      text-align:center;
-      grid-column: span 12;
-    }
-
-    /* Responsive */
-    @media (min-width: 900px){
-      .card{padding:18px}
-      .right{min-width: 260px}
-      h1{font-size:44px}
-    }
-  </style>
+<link rel="stylesheet" href="/css/styles.css">
 </head>
 
 <body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<div class="container">
 <header>
-  <div class="wrap topbar">
-    <a class="brand" href="/" aria-label="Omicentra home">
-      <span class="dot" aria-hidden="true"></span>
-      Omicentra
-    </a>
-    <nav aria-label="Primary navigation">
-      <a href="/">Home</a>
-      <a href="/conferences.html" aria-current="page">Conferences</a>
-    </nav>
-  </div>
+  <a class="brand" href="/index.html">
+    <div class="logo">O</div>
+    <div>
+      <strong>Omicentra</strong>
+      <small>Spotlight on bioinformatics</small>
+    </div>
+  </a>
+  <nav>
+    <a class="navlink" href="/index.html">Home</a>
+    <a class="navlink" href="/conferences.html" aria-current="page">Conferences</a>
+  </nav>
 </header>
 
-<main class="wrap">
-  <section class="hero">
-    <h1>Upcoming Conferences</h1>
-    <p class="lead">Browse bioinformatics conferences, filter by region and sort by submission deadline. This page is driven by <code>data/conferences.json</code>.</p>
-  </section>
+<main id="main">
+<h1>Conferences</h1>
+<p class="lead">Find where bioinformatics happens next. Track conferences. Never miss a deadline.</p>
 
-  <section class="controls" aria-label="Filters">
-    <div class="control">
-      <label for="q">Search</label>
-      <input id="q" type="search" placeholder="Name, city, country…" />
-    </div>
+<section class="filters">
+<input id="q" type="search" placeholder="Search" />
 
-    <div class="control">
-      <label for="region">Region</label>
-      <select id="region">
-        <option value="">All regions</option>
-        <option>Europe</option>
-        <option>USA</option>
-        <option>Asia</option>
-        <option>Other</option>
-      </select>
-    </div>
+<select id="region"><option value="all">All regions</option></select>
+<select id="topic"><option value="all">All topics</option></select>
+<select id="format"><option value="all">All formats</option></select>
+<select id="deadline">
+<option value="all">All deadlines</option>
+<option value="only">Only with deadline</option>
+</select>
+<button id="reset">Reset</button>
+</section>
 
-    <div class="control">
-      <label for="sort">Sort</label>
-      <select id="sort">
-        <option value="deadline">Submission deadline</option>
-        <option value="start">Start date</option>
-        <option value="name">Name</option>
-      </select>
-    </div>
+<div class="viewbar">
+<div>
+<button id="viewCards">Cards</button>
+<button id="viewTable">Table</button>
+</div>
+<div id="status"></div>
+</div>
 
-    <div class="stats" aria-live="polite">
-      <span class="pill"><span aria-hidden="true">●</span> <span id="count">0</span> results</span>
-    </div>
-  </section>
+<section id="grid" class="grid"></section>
 
-  <section class="grid" id="grid" aria-label="Conference results">
-    <div class="empty">Loading…</div>
-  </section>
+<section id="tablewrap" hidden>
+<table>
+<thead>
+<tr>
+<th><button data-sort="name">Conference</button></th>
+<th><button data-sort="dates">Dates</button></th>
+<th>Location</th>
+<th>Region</th>
+<th>Format</th>
+<th>Topics</th>
+<th><button data-sort="deadline">Deadline</button></th>
+<th>Website</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</section>
+
 </main>
 
+<footer>
+© <span id="year"></span> Omicentra
+</footer>
+</div>
+
 <script>
-  const elGrid = document.getElementById('grid');
-  const elQ = document.getElementById('q');
-  const elRegion = document.getElementById('region');
-  const elSort = document.getElementById('sort');
-  const elCount = document.getElementById('count');
+document.getElementById("year").textContent = new Date().getFullYear();
 
-  let data = [];
+const DATA_URL="/data/conferences.json";
+const URGENT_DAYS=30;
 
-  function fmtDate(iso){
-    if(!iso) return "";
-    const d = new Date(iso + "T00:00:00");
-    return d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'2-digit' });
-  }
+const grid=document.getElementById("grid");
+const tbody=document.getElementById("tbody");
+const statusEl=document.getElementById("status");
 
-  function safe(x){ return (x ?? "").toString(); }
+const q=document.getElementById("q");
+const regionSel=document.getElementById("region");
+const topicSel=document.getElementById("topic");
+const formatSel=document.getElementById("format");
+const deadlineSel=document.getElementById("deadline");
+const resetBtn=document.getElementById("reset");
 
-  function render(){
-    const q = safe(elQ.value).toLowerCase().trim();
-    const region = elRegion.value;
+let conferences=[];
+let sortKey="deadline";
+let sortDir="asc";
 
-    let rows = data.filter(x=>{
-      const hay = `${safe(x.name)} ${safe(x.location_city)} ${safe(x.location_country)}`.toLowerCase();
-      const okQ = !q || hay.includes(q);
-      const okR = !region || (x.region === region);
-      return okQ && okR;
-    });
+function midnight(){
+const d=new Date();
+return new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
+}
 
-    const sort = elSort.value;
-    rows.sort((a,b)=>{
-      if(sort==="name") return safe(a.name).localeCompare(safe(b.name));
-      if(sort==="start") return safe(a.start_date).localeCompare(safe(b.start_date));
-      return safe(a.submission_deadline).localeCompare(safe(b.submission_deadline));
-    });
+function parseISO(i){
+if(!i)return null;
+const t=Date.parse(i+"T00:00:00");
+return Number.isNaN(t)?null:t;
+}
 
-    elCount.textContent = rows.length;
+function isPastOrOngoing(c){
+const today=midnight();
+const start=parseISO(c.start_date);
+const end=parseISO(c.end_date);
+if(!start&&!end)return false;
+if(start&&end){
+if(end<today)return true;
+if(start<=today&&end>=today)return true;
+return false;
+}
+if(start&&!end)return start<=today;
+if(!start&&end)return end<today;
+return false;
+}
 
-    if(rows.length===0){
-      elGrid.innerHTML = `<div class="empty">No results. Try a different search or region.</div>`;
-      return;
-    }
+function daysToDeadline(i){
+if(!i)return Infinity;
+const t=parseISO(i);
+if(!t)return Infinity;
+const diff=Math.floor((t-midnight())/(86400000));
+return diff<0?Infinity:diff;
+}
 
-    elGrid.innerHTML = rows.map(x=>{
-      const topics = Array.isArray(x.topic) ? x.topic.join(", ") : safe(x.topic);
-      const deadline = fmtDate(x.submission_deadline);
-      const dates = `${fmtDate(x.start_date)} – ${fmtDate(x.end_date)}`;
-      const loc = [safe(x.location_city), safe(x.location_country)].filter(Boolean).join(", ");
-      const format = safe(x.format) || "—";
-      const site = safe(x.website) || "#";
+function formatDate(i){
+if(!i)return"TBA";
+return new Date(i+"T00:00:00").toLocaleDateString(undefined,{year:"numeric",month:"short",day:"2-digit"});
+}
 
-      return `
-        <article class="card">
-          <div class="badge" aria-hidden="true"></div>
-          <div class="meta">
-            <div class="titleRow">
-              <div style="min-width:0">
-                <h2 class="name">${safe(x.name)}</h2>
-                <div class="topics">${topics}</div>
-              </div>
-            </div>
-          </div>
-          <div class="right">
-            <div class="kv">
-              <div><strong>Deadline:</strong> ${deadline || "—"}</div>
-              <div><strong>Dates:</strong> ${dates.trim()==="–" ? "—" : dates}</div>
-              <div><strong>Location:</strong> ${loc || "—"}</div>
-              <div><strong>Format:</strong> ${format}</div>
-            </div>
-            <a class="btn" href="${site}" target="_blank" rel="noopener">Official website →</a>
-          </div>
-        </article>
-      `;
-    }).join("");
-  }
+function formatRange(s,e){
+if(!s&&!e)return"TBA";
+if(s&&!e)return formatDate(s);
+if(!s&&e)return formatDate(e);
+const sd=new Date(s+"T00:00:00");
+const ed=new Date(e+"T00:00:00");
+const sameYear=sd.getFullYear()===ed.getFullYear();
+const sameMonth=sameYear&&sd.getMonth()===ed.getMonth();
+const sDay=sd.toLocaleDateString(undefined,{day:"2-digit"});
+const sMon=sd.toLocaleDateString(undefined,{month:"short"});
+const eDay=ed.toLocaleDateString(undefined,{day:"2-digit"});
+const eMon=ed.toLocaleDateString(undefined,{month:"short"});
+if(sameMonth)return`${sDay} – ${eDay} ${eMon} ${sd.getFullYear()}`;
+if(sameYear)return`${sDay} ${sMon} – ${eDay} ${eMon} ${sd.getFullYear()}`;
+return`${formatDate(s)} – ${formatDate(e)}`;
+}
 
-  async function init(){
-    try{
-      const res = await fetch('/data/conferences.json', {cache:'no-store'});
-      data = await res.json();
-      render();
-    }catch(e){
-      elGrid.innerHTML = `<div class="empty">Could not load <code>/data/conferences.json</code>. Check the file path and JSON syntax.</div>`;
-    }
-  }
+function shortLocation(c){
+const city=c.location_city||"";
+const country=c.location_country||"";
+if(!city&&!country)return"TBA";
+let base=city.includes(",")?city.split(",").slice(-2).join(",").trim():city;
+let loc=country?`${base}, ${country}`:base;
+if(loc.length>34)loc=loc.slice(0,30)+"…";
+return loc;
+}
 
-  elQ.addEventListener('input', render);
-  elRegion.addEventListener('change', render);
-  elSort.addEventListener('change', render);
+function sortData(){
+conferences.sort((a,b)=>{
+if(sortKey==="name"){
+return sortDir==="asc"
+? a.name.localeCompare(b.name)
+: b.name.localeCompare(a.name);
+}
+if(sortKey==="dates"){
+const as=parseISO(a.start_date)||Infinity;
+const bs=parseISO(b.start_date)||Infinity;
+return sortDir==="asc"?as-bs:bs-as;
+}
+const ad=daysToDeadline(a.submission_deadline);
+const bd=daysToDeadline(b.submission_deadline);
+return sortDir==="asc"?ad-bd:bd-ad;
+});
+}
 
-  init();
+function render(){
+grid.innerHTML="";
+tbody.innerHTML="";
+let count=0;
+
+conferences.forEach(c=>{
+const title=c.name;
+const urgent=daysToDeadline(c.submission_deadline)<=URGENT_DAYS;
+const card=document.createElement("article");
+card.className="card";
+if(urgent)card.classList.add("urgent");
+
+card.innerHTML=`
+<h2>
+<a class="title-link" href="${c.website}" target="_blank" rel="noopener">
+<span>${title}</span>
+<span class="arrow">↗</span>
+</a>
+</h2>
+<div class="meta">
+<span class="chip">${shortLocation(c)}</span>
+<span class="chip">${formatRange(c.start_date,c.end_date)}</span>
+${c.submission_deadline?`<span class="chip deadline ${urgent?"urgent-chip":""}">Deadline: ${formatDate(c.submission_deadline)}</span>`:""}
+</div>
+`;
+
+grid.appendChild(card);
+
+const tr=document.createElement("tr");
+tr.innerHTML=`
+<td>${title}</td>
+<td>${formatRange(c.start_date,c.end_date)}</td>
+<td>${shortLocation(c)}</td>
+<td>${c.region}</td>
+<td>${c.format}</td>
+<td>${(c.topic||[]).join(", ")}</td>
+<td>${formatDate(c.submission_deadline)}</td>
+<td><a href="${c.website}" target="_blank">Website</a></td>
+`;
+tbody.appendChild(tr);
+
+count++;
+});
+
+statusEl.textContent=`${count} conference${count===1?"":"s"}`;
+}
+
+async function load(){
+const res=await fetch(DATA_URL);
+const data=await res.json();
+conferences=data.filter(c=>!isPastOrOngoing(c));
+sortData();
+render();
+}
+
+document.querySelectorAll("th button").forEach(btn=>{
+btn.addEventListener("click",()=>{
+const key=btn.dataset.sort;
+if(sortKey===key){
+sortDir=sortDir==="asc"?"desc":"asc";
+}else{
+sortKey=key;
+sortDir="asc";
+}
+sortData();
+render();
+});
+});
+
+load();
 </script>
 </body>
 </html>
