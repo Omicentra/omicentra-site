@@ -150,9 +150,9 @@
     let conferences = [];
     let currentView = "cards"; // "cards" | "table"
 
-    // Default: sort by deadline ascending
-    let sortKey = "deadline";  // "deadline" | "dates" | "name"
-    let sortDir = "asc";       // "asc" | "desc"
+    // Default: shortest time to deadline (days left), ascending
+    let sortKey = "deadline";
+    let sortDir = "asc";
 
     function escapeHtml(s){
       return String(s)
@@ -163,6 +163,33 @@
         .replaceAll("'","&#39;");
     }
 
+    function todayMidnight(){
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    }
+
+    function parseIsoMidnight(iso){
+      if (!iso) return null;
+      const t = Date.parse(iso + "T00:00:00");
+      return Number.isNaN(t) ? null : t;
+    }
+
+    // (5) Filter out past or ongoing conferences (based on dates)
+    function isPastOrOngoing(c){
+      const today = todayMidnight();
+      const start = parseIsoMidnight(c.start_date);
+      const end = parseIsoMidnight(c.end_date);
+
+      if (start === null && end === null) return false;
+
+      if (start !== null && end === null) return start <= today; // started already -> exclude
+      if (start === null && end !== null) return end < today;    // ended -> exclude
+
+      if (end < today) return true;               // past
+      if (start <= today && end >= today) return true; // ongoing
+      return false; // upcoming
+    }
+
     function formatDate(iso){
       if (!iso) return "TBA";
       const d = new Date(iso + "T00:00:00");
@@ -170,13 +197,6 @@
       return d.toLocaleDateString(undefined, { year:"numeric", month:"short", day:"2-digit" });
     }
 
-    // Rules:
-    // - Same year: show year once at the end
-    // - Same month (and same year): show start day only, then end day+month, then year
-    //   Example: 10 – 14 Jul 2026
-    // - Same year but different months: show day+month for both, year once
-    //   Example: 28 Feb – 02 Mar 2026
-    // - Different years: full dates on both sides
     function formatDateRange(startIso, endIso){
       if (!startIso && !endIso) return "TBA";
       if (startIso && !endIso) return formatDate(startIso);
@@ -245,10 +265,30 @@
       if ([...selectEl.options].some(o => o.value === current)) selectEl.value = current;
     }
 
-    function conferenceLocation(c){
-      return (c.location_city && c.location_country)
-        ? `${c.location_city}, ${c.location_country}`
-        : (c.location_country || c.location_city || "TBA");
+    // (2) Shorter location display
+    function shortLocation(c){
+      const country = String(c.location_country || "").trim();
+      let city = String(c.location_city || "").trim();
+
+      if (!city && country) return country;
+      if (!country && city) return city;
+      if (!city && !country) return "TBA";
+
+      const parts = city.split(",").map(s => s.trim()).filter(Boolean);
+      if (parts.length >= 3){
+        city = parts.slice(1).join(", ");
+      }
+
+      const cityEndsWithCountry = country && city.toLowerCase().endsWith(country.toLowerCase());
+      let loc = cityEndsWithCountry ? city : `${city}, ${country}`;
+
+      if (loc.length > 34){
+        const keepCountry = country ? `, ${country}` : "";
+        const shortBase = city.slice(0, 22).trimEnd();
+        loc = `${shortBase}…${keepCountry}`;
+      }
+
+      return loc;
     }
 
     function conferenceDateRange(c){
@@ -259,19 +299,19 @@
       return c.submission_deadline ? formatDate(c.submission_deadline) : "—";
     }
 
-    function todayMidnight(){
-      const now = new Date();
-      return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    // (1) Sorting by "time to deadline" (days left). Past/none -> Infinity
+    function daysToDeadline(iso){
+      if (!iso) return Infinity;
+      const t = parseIsoMidnight(iso);
+      if (t === null) return Infinity;
+      const diffDays = Math.floor((t - todayMidnight()) / (24*60*60*1000));
+      return diffDays < 0 ? Infinity : diffDays;
     }
 
     function deadlineUrgency(iso){
-      if (!iso) return { isUrgent:false, days:null };
-      const d = Date.parse(iso + "T00:00:00");
-      if (Number.isNaN(d)) return { isUrgent:false, days:null };
-
-      const diffDays = Math.floor((d - todayMidnight()) / (24*60*60*1000));
-      const isUrgent = diffDays >= 0 && diffDays <= URGENT_DAYS;
-      return { isUrgent, days: diffDays };
+      const d = daysToDeadline(iso);
+      const isUrgent = Number.isFinite(d) && d <= URGENT_DAYS;
+      return { isUrgent, days: Number.isFinite(d) ? d : null };
     }
 
     function renderCard(c){
@@ -282,14 +322,9 @@
       const { isUrgent } = deadlineUrgency(c.submission_deadline);
 
       const chips = [];
-
-      // Location
-      chips.push({ text: conferenceLocation(c), cls: "chip" });
-
-      // Dates
+      chips.push({ text: shortLocation(c), cls: "chip" });
       chips.push({ text: conferenceDateRange(c), cls: "chip" });
 
-      // Deadline (optional)
       if (c.submission_deadline){
         const text = `Deadline: ${formatDate(c.submission_deadline)}`;
         chips.push({ text, cls: `chip chip--deadline${isUrgent ? " chip--urgent" : ""}` });
@@ -303,11 +338,9 @@
       const article = document.createElement("article");
       article.className = "card";
 
-      // Color by format
       const isOnsite = (format === "onsite");
       article.classList.add(isOnsite ? "card--onsite" : "card--remote");
 
-      // Urgent styling on card (subtle)
       if (isUrgent) article.classList.add("card--urgent");
 
       article.dataset.title = String(name).toLowerCase();
@@ -318,9 +351,7 @@
 
       article.innerHTML = `
         <h2>${escapeHtml(name)}</h2>
-        <div class="meta">
-          ${chipHtml}
-        </div>
+        <div class="meta">${chipHtml}</div>
         <a class="cta cta--small" href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer"
            aria-label="Open conference website: ${escapeHtml(name)}">
           Website
@@ -333,7 +364,7 @@
       const name = c.name || "Untitled";
       const website = c.website || "#";
       const region = normalizeRegion(c.region);
-      const format = normalizeFormat(c.format);
+      const format = normalizeFormat(c.format); // (3) lowercase
       const topics = topicList(c);
 
       const tr = document.createElement("tr");
@@ -346,9 +377,9 @@
       tr.innerHTML = `
         <td class="tname">${escapeHtml(name)}</td>
         <td>${escapeHtml(conferenceDateRange(c))}</td>
-        <td>${escapeHtml(conferenceLocation(c))}</td>
+        <td>${escapeHtml(shortLocation(c))}</td>
         <td>${escapeHtml(region)}</td>
-        <td>${escapeHtml(format.toUpperCase())}</td>
+        <td>${escapeHtml(format)}</td>
         <td>${escapeHtml(topics.join(", ") || "—")}</td>
         <td>${escapeHtml(conferenceDeadline(c))}</td>
         <td class="tlink">
@@ -426,17 +457,18 @@
         if (sortKey === "dates"){
           const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
           const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
-          if (as !== bs) return (as - bs) * dir;
-
-          const ae = a.end_date ? Date.parse(a.end_date + "T00:00:00") : Infinity;
-          const be = b.end_date ? Date.parse(b.end_date + "T00:00:00") : Infinity;
-          return (ae - be) * dir;
+          return (as - bs) * dir;
         }
 
-        // deadline
-        const ad = a.submission_deadline ? Date.parse(a.submission_deadline + "T00:00:00") : Infinity;
-        const bd = b.submission_deadline ? Date.parse(b.submission_deadline + "T00:00:00") : Infinity;
-        return (ad - bd) * dir;
+        // deadline: sort by shortest time-to-deadline
+        const ad = daysToDeadline(a.submission_deadline);
+        const bd = daysToDeadline(b.submission_deadline);
+        if (ad !== bd) return (ad - bd) * dir;
+
+        // tie-breaker: start date
+        const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
+        const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
+        return (as - bs) * dir;
       });
     }
 
@@ -468,13 +500,6 @@
         sortKey = key;
         sortDir = "asc";
       }
-
-      // Default direction preference:
-      // deadlines: asc (soonest first) on first click
-      if (key === "deadline" && sortKey === key && sortDir === "asc"){
-        // already correct
-      }
-
       sortConferences();
       rerender();
     }
@@ -498,30 +523,30 @@
       const data = await res.json();
       if (!Array.isArray(data)) throw new Error("Invalid JSON: expected an array");
 
-      conferences = data.slice();
+      // (5) filter first: upcoming only
+      conferences = data.filter(c => !isPastOrOngoing(c));
 
-      // Build filters
+      // Build selects from upcoming only
       const regions = uniqSorted(conferences.map(c => normalizeRegion(c.region)).filter(Boolean));
-      const formats = uniqSorted(conferences.map(c => normalizeFormat(c.format)).filter(Boolean).map(f => f.toUpperCase()));
+      const formats = uniqSorted(conferences.map(c => normalizeFormat(c.format)).filter(Boolean)); // lowercase
       const topics = uniqSorted(conferences.flatMap(c => topicList(c)).filter(Boolean));
 
       buildSelect(regionSel, regions);
       buildSelect(topicSel, topics);
 
+      // (3) format select: lowercase labels, lowercase values
       formatSel.innerHTML = '<option value="all">All</option>';
       for (const f of formats){
         const opt = document.createElement("option");
-        opt.value = toKey(String(f).toLowerCase());
+        opt.value = toKey(f);
         opt.textContent = f;
         formatSel.appendChild(opt);
       }
 
-      // Default sort: deadline asc
+      // (1) default sort: shortest time to deadline
       sortKey = "deadline";
       sortDir = "asc";
       sortConferences();
-
-      // Render
       rerender();
 
       // View restore
