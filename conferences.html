@@ -148,11 +148,11 @@
     const thDeadline = document.getElementById("th-deadline");
 
     let conferences = [];
-    let currentView = "cards"; // "cards" | "table"
+    let currentView = "cards";
 
-    // Default: sort by deadline ascending
-    let sortKey = "deadline";  // "deadline" | "dates" | "name"
-    let sortDir = "asc";       // "asc" | "desc"
+    // Default sort: soonest deadline first (by remaining days)
+    let sortKey = "deadline";
+    let sortDir = "asc";
 
     function escapeHtml(s){
       return String(s)
@@ -163,6 +163,38 @@
         .replaceAll("'","&#39;");
     }
 
+    function midnightTs(){
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    }
+
+    function parseIsoMidnight(iso){
+      if (!iso) return null;
+      const t = Date.parse(iso + "T00:00:00");
+      return Number.isNaN(t) ? null : t;
+    }
+
+    function isConferencePastOrOngoing(c){
+      const today = midnightTs();
+
+      const start = parseIsoMidnight(c.start_date);
+      const end = parseIsoMidnight(c.end_date);
+
+      // If both missing -> keep (unknown)
+      if (start === null && end === null) return false;
+
+      // If only start: if start <= today => ongoing/past
+      if (start !== null && end === null) return start <= today;
+
+      // If only end: if end < today => past, else keep
+      if (start === null && end !== null) return end < today;
+
+      // Both present:
+      if (end < today) return true; // past
+      if (start <= today && end >= today) return true; // ongoing
+      return false; // upcoming
+    }
+
     function formatDate(iso){
       if (!iso) return "TBA";
       const d = new Date(iso + "T00:00:00");
@@ -170,13 +202,6 @@
       return d.toLocaleDateString(undefined, { year:"numeric", month:"short", day:"2-digit" });
     }
 
-    // Rules:
-    // - Same year: show year once at the end
-    // - Same month (and same year): show start day only, then end day+month, then year
-    //   Example: 10 – 14 Jul 2026
-    // - Same year but different months: show day+month for both, year once
-    //   Example: 28 Feb – 02 Mar 2026
-    // - Different years: full dates on both sides
     function formatDateRange(startIso, endIso){
       if (!startIso && !endIso) return "TBA";
       if (startIso && !endIso) return formatDate(startIso);
@@ -245,10 +270,33 @@
       if ([...selectEl.options].some(o => o.value === current)) selectEl.value = current;
     }
 
-    function conferenceLocation(c){
-      return (c.location_city && c.location_country)
-        ? `${c.location_city}, ${c.location_country}`
-        : (c.location_country || c.location_city || "TBA");
+    function shortLocation(c){
+      const country = String(c.location_country || "").trim();
+      let city = String(c.location_city || "").trim();
+
+      if (!city && country) return country;
+      if (!country && city) return city;
+      if (!city && !country) return "TBA";
+
+      // If city contains multiple comma-separated parts (>=3), drop the first part (usually too detailed)
+      const parts = city.split(",").map(s => s.trim()).filter(Boolean);
+      if (parts.length >= 3){
+        city = parts.slice(1).join(", ");
+      }
+
+      // Avoid duplicating country if city already ends with it
+      const cityEndsWithCountry = country && city.toLowerCase().endsWith(country.toLowerCase());
+      let loc = cityEndsWithCountry ? city : `${city}, ${country}`;
+
+      // If still too long, keep start + country
+      if (loc.length > 34){
+        const keepCountry = country ? `, ${country}` : "";
+        const base = cityEndsWithCountry ? city : city;
+        const shortBase = base.slice(0, 22).trimEnd();
+        loc = `${shortBase}…${keepCountry}`;
+      }
+
+      return loc;
     }
 
     function conferenceDateRange(c){
@@ -259,19 +307,20 @@
       return c.submission_deadline ? formatDate(c.submission_deadline) : "—";
     }
 
-    function todayMidnight(){
-      const now = new Date();
-      return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    function deadlineDaysLeft(iso){
+      if (!iso) return Infinity;
+      const d = parseIsoMidnight(iso);
+      if (d === null) return Infinity;
+      const diffDays = Math.floor((d - midnightTs()) / (24*60*60*1000));
+      // Past deadlines go last
+      if (diffDays < 0) return Infinity;
+      return diffDays;
     }
 
     function deadlineUrgency(iso){
-      if (!iso) return { isUrgent:false, days:null };
-      const d = Date.parse(iso + "T00:00:00");
-      if (Number.isNaN(d)) return { isUrgent:false, days:null };
-
-      const diffDays = Math.floor((d - todayMidnight()) / (24*60*60*1000));
-      const isUrgent = diffDays >= 0 && diffDays <= URGENT_DAYS;
-      return { isUrgent, days: diffDays };
+      const days = deadlineDaysLeft(iso);
+      const isUrgent = Number.isFinite(days) && days <= URGENT_DAYS;
+      return { isUrgent, days: Number.isFinite(days) ? days : null };
     }
 
     function renderCard(c){
@@ -282,17 +331,13 @@
       const { isUrgent } = deadlineUrgency(c.submission_deadline);
 
       const chips = [];
-
-      // Location
-      chips.push({ text: conferenceLocation(c), cls: "chip" });
-
-      // Dates
+      chips.push({ text: shortLocation(c), cls: "chip" });
       chips.push({ text: conferenceDateRange(c), cls: "chip" });
-
-      // Deadline (optional)
       if (c.submission_deadline){
-        const text = `Deadline: ${formatDate(c.submission_deadline)}`;
-        chips.push({ text, cls: `chip chip--deadline${isUrgent ? " chip--urgent" : ""}` });
+        chips.push({
+          text: `Deadline: ${formatDate(c.submission_deadline)}`,
+          cls: `chip chip--deadline${isUrgent ? " chip--urgent" : ""}`
+        });
       }
 
       const chipHtml = chips
@@ -307,7 +352,7 @@
       const isOnsite = (format === "onsite");
       article.classList.add(isOnsite ? "card--onsite" : "card--remote");
 
-      // Urgent styling on card (subtle)
+      // Urgent styling
       if (isUrgent) article.classList.add("card--urgent");
 
       article.dataset.title = String(name).toLowerCase();
@@ -321,10 +366,12 @@
         <div class="meta">
           ${chipHtml}
         </div>
-        <a class="cta cta--small" href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer"
-           aria-label="Open conference website: ${escapeHtml(name)}">
-          Website
-        </a>
+        <div class="card-actions">
+          <a class="cta cta--tiny" href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer"
+             aria-label="Open conference website: ${escapeHtml(name)}">
+            Website
+          </a>
+        </div>
       `;
       return article;
     }
@@ -346,9 +393,9 @@
       tr.innerHTML = `
         <td class="tname">${escapeHtml(name)}</td>
         <td>${escapeHtml(conferenceDateRange(c))}</td>
-        <td>${escapeHtml(conferenceLocation(c))}</td>
+        <td>${escapeHtml(shortLocation(c))}</td>
         <td>${escapeHtml(region)}</td>
-        <td>${escapeHtml(format.toUpperCase())}</td>
+        <td>${escapeHtml(format)}</td>
         <td>${escapeHtml(topics.join(", ") || "—")}</td>
         <td>${escapeHtml(conferenceDeadline(c))}</td>
         <td class="tlink">
@@ -424,19 +471,24 @@
         }
 
         if (sortKey === "dates"){
-          const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
-          const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
+          const as = parseIsoMidnight(a.start_date) ?? Infinity;
+          const bs = parseIsoMidnight(b.start_date) ?? Infinity;
           if (as !== bs) return (as - bs) * dir;
 
-          const ae = a.end_date ? Date.parse(a.end_date + "T00:00:00") : Infinity;
-          const be = b.end_date ? Date.parse(b.end_date + "T00:00:00") : Infinity;
+          const ae = parseIsoMidnight(a.end_date) ?? Infinity;
+          const be = parseIsoMidnight(b.end_date) ?? Infinity;
           return (ae - be) * dir;
         }
 
-        // deadline
-        const ad = a.submission_deadline ? Date.parse(a.submission_deadline + "T00:00:00") : Infinity;
-        const bd = b.submission_deadline ? Date.parse(b.submission_deadline + "T00:00:00") : Infinity;
-        return (ad - bd) * dir;
+        // deadline: sort by remaining days
+        const ad = deadlineDaysLeft(a.submission_deadline);
+        const bd = deadlineDaysLeft(b.submission_deadline);
+        if (ad !== bd) return (ad - bd) * dir;
+
+        // tie-breaker: upcoming start date
+        const as = parseIsoMidnight(a.start_date) ?? Infinity;
+        const bs = parseIsoMidnight(b.start_date) ?? Infinity;
+        return (as - bs) * dir;
       });
     }
 
@@ -468,13 +520,6 @@
         sortKey = key;
         sortDir = "asc";
       }
-
-      // Default direction preference:
-      // deadlines: asc (soonest first) on first click
-      if (key === "deadline" && sortKey === key && sortDir === "asc"){
-        // already correct
-      }
-
       sortConferences();
       rerender();
     }
@@ -498,11 +543,13 @@
       const data = await res.json();
       if (!Array.isArray(data)) throw new Error("Invalid JSON: expected an array");
 
-      conferences = data.slice();
+      // Filter out past and ongoing conferences before anything else
+      const upcoming = data.filter(c => !isConferencePastOrOngoing(c));
+      conferences = upcoming.slice();
 
-      // Build filters
+      // Build filters from upcoming only
       const regions = uniqSorted(conferences.map(c => normalizeRegion(c.region)).filter(Boolean));
-      const formats = uniqSorted(conferences.map(c => normalizeFormat(c.format)).filter(Boolean).map(f => f.toUpperCase()));
+      const formats = uniqSorted(conferences.map(c => normalizeFormat(c.format)).filter(Boolean).map(f => f));
       const topics = uniqSorted(conferences.flatMap(c => topicList(c)).filter(Boolean));
 
       buildSelect(regionSel, regions);
@@ -511,20 +558,18 @@
       formatSel.innerHTML = '<option value="all">All</option>';
       for (const f of formats){
         const opt = document.createElement("option");
-        opt.value = toKey(String(f).toLowerCase());
-        opt.textContent = f;
+        opt.value = toKey(f);
+        opt.textContent = f; // keep lowercase e.g. onsite
         formatSel.appendChild(opt);
       }
 
-      // Default sort: deadline asc
+      // Default sort: shortest time to deadline (past deadlines go last)
       sortKey = "deadline";
       sortDir = "asc";
       sortConferences();
-
-      // Render
       rerender();
 
-      // View restore
+      // Restore view preference
       let saved = "cards";
       try { saved = localStorage.getItem("omicentra_view") || "cards"; } catch {}
       setView(saved === "table" ? "table" : "cards");
