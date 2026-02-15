@@ -205,21 +205,11 @@
       return c.submission_deadline ? formatDate(c.submission_deadline) : "—";
     }
 
+    // ===== Cards: compact chips only (Location, Dates, Deadline) =====
     function renderCard(c){
       const name = c.name || "Untitled";
       const website = c.website || "#";
-      const region = normalizeRegion(c.region);
       const format = normalizeFormat(c.format);
-      const topics = topicList(c);
-
-      // Cards: remove format chip to keep cards compact
-      // Also avoid redundant country chip when location is "City, Country" and region == country
-      const locationCountry = String(c.location_country || "").trim();
-      const hasCity = String(c.location_city || "").trim() !== "";
-      const showRegionChip =
-        !locationCountry ||
-        !hasCity ||
-        region.toLowerCase() !== locationCountry.toLowerCase();
 
       const chips = [
         conferenceLocation(c),
@@ -234,32 +224,31 @@
       const article = document.createElement("article");
       article.className = "card";
 
-      // Cards: color by format (onsite = silver, everything else = blue)
+      // Color: onsite = silver, everything else = blue
       const isOnsite = (format === "onsite");
       article.classList.add(isOnsite ? "card--onsite" : "card--remote");
 
       article.dataset.title = String(name).toLowerCase();
-      article.dataset.region = toKey(region);
+      article.dataset.region = toKey(normalizeRegion(c.region));
       article.dataset.format = toKey(format);
-      article.dataset.topic = topics.map(t => toKey(t)).join("|");
+      article.dataset.topic = topicList(c).map(t => toKey(t)).join("|");
       article.dataset.deadline = c.submission_deadline ? String(c.submission_deadline) : "";
 
       article.innerHTML = `
         <h2>${escapeHtml(name)}</h2>
         <div class="meta">
           ${chipHtml}
-          <span class="chip">${escapeHtml(conferenceLocation(c))}</span>
-          <span class="chip">${escapeHtml(conferenceDateRange(c))}</span>
-          ${c.submission_deadline ? `<span class="chip">Deadline: ${escapeHtml(formatDate(c.submission_deadline))}</span>` : ""}
         </div>
         <a class="cta" href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer"
            aria-label="Open conference website: ${escapeHtml(name)}">
           Conference website
         </a>
       `;
+
       return article;
     }
 
+    // ===== Table: unchanged (keeps Region/Format/Topics columns) =====
     function renderRow(c){
       const name = c.name || "Untitled";
       const website = c.website || "#";
