@@ -476,3 +476,30 @@ footer{
 }
 
 [hidden]{display:none !important;}
+
+/* Smaller, UI-friendly website button in cards */
+.card-actions{
+  margin-top: 6px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+}
+
+.cta--tiny{
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  letter-spacing: .12px;
+  width: auto;
+}
+
+/* Urgent styling should be purple (not blue) */
+.chip--urgent{
+  border-color: rgba(124,58,237,.40);
+  background: rgba(124,58,237,.12);
+}
+
+.card--urgent{
+  box-shadow: 0 0 0 2px rgba(124,58,237,.16);
+}
