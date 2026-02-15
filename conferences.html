@@ -39,7 +39,7 @@
       <section class="filters" aria-label="Conference filters">
         <div>
           <label for="q">Search</label>
-          <input id="q" type="search" placeholder="Search by name or keyword" autocomplete="off" />
+          <input id="q" type="search" placeholder="Search" autocomplete="off" />
         </div>
 
         <div>
@@ -151,6 +151,30 @@
       return d.toLocaleDateString(undefined, { year:"numeric", month:"short", day:"2-digit" });
     }
 
+    function formatDateRange(startIso, endIso){
+      if (!startIso && !endIso) return "TBA";
+      if (startIso && !endIso) return formatDate(startIso);
+      if (!startIso && endIso) return formatDate(endIso);
+
+      const start = new Date(startIso + "T00:00:00");
+      const end = new Date(endIso + "T00:00:00");
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "TBA";
+
+      const sameYear = start.getFullYear() === end.getFullYear();
+
+      const sDay = start.toLocaleDateString(undefined, { day:"2-digit" });
+      const sMon = start.toLocaleDateString(undefined, { month:"short" });
+      const eDay = end.toLocaleDateString(undefined, { day:"2-digit" });
+      const eMon = end.toLocaleDateString(undefined, { month:"short" });
+
+      if (sameYear){
+        const year = start.getFullYear();
+        return `${sDay} ${sMon} – ${eDay} ${eMon} ${year}`;
+      }
+
+      return `${formatDate(startIso)} – ${formatDate(endIso)}`;
+    }
+
     function toKey(s){
       return String(s || "").trim().toLowerCase().replace(/\s+/g, "-");
     }
@@ -196,16 +220,13 @@
     }
 
     function conferenceDateRange(c){
-      return (c.start_date || c.end_date)
-        ? `${formatDate(c.start_date)} – ${formatDate(c.end_date)}`
-        : "TBA";
+      return formatDateRange(c.start_date, c.end_date);
     }
 
     function conferenceDeadline(c){
       return c.submission_deadline ? formatDate(c.submission_deadline) : "—";
     }
 
-    // ===== Cards: compact chips only (Location, Dates, Deadline) =====
     function renderCard(c){
       const name = c.name || "Untitled";
       const website = c.website || "#";
@@ -224,7 +245,6 @@
       const article = document.createElement("article");
       article.className = "card";
 
-      // Color: onsite = silver, everything else = blue
       const isOnsite = (format === "onsite");
       article.classList.add(isOnsite ? "card--onsite" : "card--remote");
 
@@ -244,11 +264,9 @@
           Conference website
         </a>
       `;
-
       return article;
     }
 
-    // ===== Table: unchanged (keeps Region/Format/Topics columns) =====
     function renderRow(c){
       const name = c.name || "Untitled";
       const website = c.website || "#";
@@ -315,7 +333,7 @@
         if (ok) shown++;
       }
 
-      statusEl.textContent = `${shown} conference${shown === 1 ? "" : "s"} shown`;
+      statusEl.textContent = `${shown} conference${shown === 1 ? "" : "s"}`;
     }
 
     function setView(view){
@@ -342,7 +360,6 @@
       const data = await res.json();
       if (!Array.isArray(data)) throw new Error("Invalid JSON: expected an array");
 
-      // Sort by submission deadline ascending (missing deadlines go last)
       conferences = data.slice().sort((a, b) => {
         const da = a.submission_deadline ? Date.parse(a.submission_deadline) : Infinity;
         const db = b.submission_deadline ? Date.parse(b.submission_deadline) : Infinity;
@@ -356,7 +373,6 @@
       buildSelect(regionSel, regions);
       buildSelect(topicSel, topics);
 
-      // Format select: show uppercase labels but store lowercase keys
       formatSel.innerHTML = '<option value="all">All</option>';
       for (const f of formats){
         const opt = document.createElement("option");
@@ -365,7 +381,6 @@
         formatSel.appendChild(opt);
       }
 
-      // Render both views
       grid.innerHTML = "";
       tbody.innerHTML = "";
       for (const c of conferences){
@@ -373,7 +388,6 @@
         tbody.appendChild(renderRow(c));
       }
 
-      // Restore preferred view
       let saved = "cards";
       try { saved = localStorage.getItem("omicentra_view") || "cards"; } catch {}
       setView(saved === "table" ? "table" : "cards");
