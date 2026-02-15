@@ -7,7 +7,11 @@
 
   <!-- ===== MAINTENANCE SWITCH ===== -->
   <script>
-    window.MAINTENANCE_MODE = true; // set to true when needed, falce when not needed
+    window.MAINTENANCE_MODE = false; // set to true to enable maintenance
+
+    if (window.MAINTENANCE_MODE) {
+      window.location.replace("/maintenance.html");
+    }
   </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +27,6 @@
       --accent1:#7c3aed;
       --accent2:#06b6d4;
       --border:#e5e7eb;
-      --soft:#f6f7fb;
       --focus:#0ea5e9;
       --focusRing: rgba(14,165,233,.25);
       --radius: 18px;
@@ -41,31 +44,6 @@
         radial-gradient(760px 460px at 85% 18%, rgba(6,182,212,.10), transparent 55%),
         linear-gradient(180deg, #ffffff, #fbfcff);
       line-height:1.5;
-    }
-
-    .skip-link{
-      position:absolute;
-      left:12px; top:12px;
-      transform: translateY(-150%);
-      background:#fff;
-      color:var(--text);
-      padding:12px 14px;
-      border-radius:12px;
-      border:2px solid var(--focus);
-      text-decoration:none;
-      z-index:1000;
-    }
-    .skip-link:focus{
-      transform: translateY(0);
-      box-shadow: 0 0 0 6px var(--focusRing);
-    }
-
-    :focus{outline:none}
-    :focus-visible{
-      outline:2px solid var(--focus);
-      outline-offset:3px;
-      box-shadow: 0 0 0 6px var(--focusRing);
-      border-radius: 12px;
     }
 
     .wrap{
@@ -117,12 +95,6 @@
       margin: 0 0 18px;
     }
 
-    .dot{
-      width:10px;height:10px;border-radius:50%;
-      background: linear-gradient(135deg, var(--accent1), var(--accent2));
-      box-shadow: 0 0 0 4px rgba(124,58,237,.10);
-    }
-
     .sub{
       font-size: 18px;
       line-height: 1.65;
@@ -131,27 +103,17 @@
       max-width: 60ch;
     }
 
-    nav.actions{
-      display:flex;
-      gap:12px;
-      justify-content:center;
-      flex-wrap:wrap;
-      margin-top: 10px;
-    }
-
     .btn{
       display:inline-flex;
       min-height:44px;
       align-items:center;
       justify-content:center;
-      gap:10px;
       padding: 12px 16px;
       border-radius: 14px;
       border:1px solid var(--border);
       color: var(--text);
       text-decoration:none;
       font-weight:800;
-      letter-spacing:.2px;
       background:#fff;
     }
 
@@ -166,94 +128,47 @@
       padding: 0 24px 28px;
       display:flex;
       justify-content:space-between;
-      gap:12px;
       color: var(--muted2);
       font-size: 12px;
-      flex-wrap:wrap;
-    }
-
-    .maint{
-      min-height:100vh;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:24px;
-      text-align:center;
-    }
-
-    .maint h1{
-      margin:0 0 10px;
-      font-size: clamp(40px, 5vw, 64px);
-    }
-
-    .maint p{
-      margin:0;
-      color: var(--muted);
-      font-size: 18px;
     }
   </style>
 </head>
 
 <body>
 
-  <main id="maintenance" class="maint" hidden>
-    <div>
+  <main>
+    <section class="wrap">
+      <header>
+        <div class="logo" aria-hidden="true">O</div>
+        <div style="text-align:left">
+          <div style="font-weight:800;">Omicentra</div>
+          <div style="color:var(--muted2); font-size:13px;">Spotlight on bioinformatics</div>
+        </div>
+      </header>
+
       <h1>Omicentra</h1>
-      <p>Website under development.</p>
-    </div>
+
+      <p class="tag">
+        Spotlight on Bioinformatics
+      </p>
+
+      <p class="sub">
+        Launching soon. Tracking conferences and research trends worldwide.
+      </p>
+
+      <a class="btn btn-primary" href="/conferences.html">
+        Go to Conferences →
+      </a>
+    </section>
   </main>
 
-  <div id="site">
-    <a class="skip-link" href="#main">Skip to content</a>
-
-    <main id="main" tabindex="-1">
-      <section class="wrap">
-        <header>
-          <div class="logo" aria-hidden="true">O</div>
-          <div style="text-align:left">
-            <div style="font-weight:800;">Omicentra</div>
-            <div style="color:var(--muted2); font-size:13px;">Spotlight on bioinformatics</div>
-          </div>
-        </header>
-
-        <h1>Omicentra</h1>
-
-        <p class="tag">
-          <span class="dot" aria-hidden="true"></span>
-          Spotlight on Bioinformatics
-        </p>
-
-        <p class="sub">
-          Launching soon. Tracking conferences and research trends worldwide.
-        </p>
-
-        <nav class="actions">
-          <a class="btn btn-primary" href="/conferences.html">
-            Go to Conferences →
-          </a>
-        </nav>
-      </section>
-    </main>
-
-    <footer>
-      <div>© <span id="year"></span> Omicentra</div>
-      <div><a href="/conferences.html">Conferences</a></div>
-    </footer>
-  </div>
+  <footer>
+    <div>© <span id="year"></span> Omicentra</div>
+    <div><a href="/conferences.html">Conferences</a></div>
+  </footer>
 
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
-
-    const site = document.getElementById("site");
-    const maintenance = document.getElementById("maintenance");
-
-    if (window.MAINTENANCE_MODE) {
-      site.hidden = true;
-      maintenance.hidden = false;
-    } else {
-      site.hidden = false;
-      maintenance.hidden = true;
-    }
   </script>
 
 </body>
