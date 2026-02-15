@@ -307,10 +307,10 @@ input[type="search"], select{
   background: rgba(124,58,237,.06);
 }
 
-/* Urgent deadline chip */
+/* Urgent deadline chip (PURPLE) */
 .chip--urgent{
-  border-color: rgba(6,182,212,.40);
-  background: rgba(6,182,212,.10);
+  border-color: rgba(124,58,237,.45);
+  background: rgba(124,58,237,.12);
 }
 
 /* Card CTA */
@@ -350,9 +350,9 @@ input[type="search"], select{
   border-color: rgba(6,182,212,.28);
 }
 
-/* Subtle urgent card outline */
+/* Subtle urgent card outline (PURPLE) */
 .card--urgent{
-  box-shadow: 0 0 0 2px rgba(6,182,212,.18);
+  box-shadow: 0 0 0 2px rgba(124,58,237,.16);
 }
 
 /* Table view */
