@@ -3,591 +3,361 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Omicentra | Conferences</title>
-  <meta name="description" content="Find where bioinformatics happens next. Track conferences. Never miss a deadline." />
+  <title>Omicentra — Conferences</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#ffffff;
+      --text:#1C1F23;
+      --muted:#58606a;
+      --border:#e8ebef;
+      --card:#ffffff;
+      --soft:#f6f7f9;
+      --link:#1a73e8;
+      --shadow: 0 8px 24px rgba(16,24,40,.06);
+      --radius:16px;
+    }
 
-  <link rel="stylesheet" href="/css/styles.css">
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Montserrat, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    a{color:var(--link); text-decoration:none}
+    a:hover{text-decoration:underline}
+    .wrap{max-width:1120px; margin:0 auto; padding:0 20px}
+
+    /* Top bar */
+    header{
+      position:sticky; top:0; z-index:10;
+      background:rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      border-bottom:1px solid var(--border);
+    }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 0;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight:700;
+      letter-spacing:.2px;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background:linear-gradient(135deg,#14A38B,#3D7BDB,#7757AD);
+    }
+    nav a{
+      color:var(--muted);
+      margin-left:14px;
+      font-size:14px;
+    }
+    nav a[aria-current="page"]{
+      color:var(--text);
+      font-weight:600;
+      text-decoration:underline;
+      text-underline-offset:6px;
+    }
+
+    /* Hero */
+    .hero{padding:34px 0 18px}
+    h1{font-size:40px; line-height:1.1; margin:0 0 10px}
+    .lead{color:var(--muted); margin:0; max-width:72ch; line-height:1.6}
+
+    /* Controls */
+    .controls{
+      margin:18px 0 18px;
+      padding:14px;
+      background:var(--soft);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .control{
+      display:flex; flex-direction:column; gap:6px;
+      min-width: 200px;
+    }
+    label{font-size:12px; color:var(--muted)}
+    input, select{
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#fff;
+      font-size:14px;
+      color:var(--text);
+      outline:none;
+    }
+    input:focus, select:focus{
+      border-color:#b9c3d1;
+      box-shadow:0 0 0 3px rgba(26,115,232,.12);
+    }
+
+    .stats{
+      display:flex; align-items:center; gap:10px;
+      margin-left:auto;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px;
+      border:1px solid var(--border);
+      border-radius:999px;
+      background:#fff;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    /* Cards grid */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:14px;
+      padding: 6px 0 70px;
+    }
+    .card{
+      grid-column: span 12;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow: var(--shadow);
+      padding:16px;
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+    }
+
+    .badge{
+      flex:0 0 auto;
+      width:44px;height:44px;border-radius:14px;
+      background:linear-gradient(135deg,#14A38B,#3D7BDB,#7757AD);
+      opacity:.9;
+    }
+
+    .meta{flex:1 1 auto; min-width:0;}
+    .titleRow{
+      display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
+    }
+    .name{
+      font-size:18px; font-weight:700; margin:0;
+    }
+    .topics{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.4;
+    }
+
+    .right{
+      flex:0 0 auto;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:flex-end;
+      min-width: 210px;
+    }
+
+    .kv{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:6px;
+      width:100%;
+      padding:10px 12px;
+      background:var(--soft);
+      border:1px solid var(--border);
+      border-radius:14px;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .kv strong{color:var(--text); font-weight:600}
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fff;
+      font-size:13px;
+      color:var(--text);
+      width:100%;
+      text-decoration:none;
+    }
+    .btn:hover{
+      border-color:#cbd5e1;
+      text-decoration:none;
+    }
+
+    .empty{
+      border:1px dashed var(--border);
+      border-radius:var(--radius);
+      padding:26px;
+      color:var(--muted);
+      text-align:center;
+      grid-column: span 12;
+    }
+
+    /* Responsive */
+    @media (min-width: 900px){
+      .card{padding:18px}
+      .right{min-width: 260px}
+      h1{font-size:44px}
+    }
+  </style>
 </head>
 
 <body>
-  <a class="skip-link" href="#main">Skip to content</a>
-
-  <div class="container">
-    <header aria-label="Site header">
-      <a class="brand" href="/index.html" aria-label="Go to Omicentra homepage">
-        <div class="logo" aria-hidden="true">O</div>
-        <div class="brand-text">
-          <strong>Omicentra</strong>
-          <small>Spotlight on bioinformatics</small>
-        </div>
-      </a>
-
-      <nav class="topnav" aria-label="Primary navigation">
-        <a class="navlink" href="/index.html">Home</a>
-        <a class="navlink" href="/conferences.html" aria-current="page">Conferences</a>
-      </nav>
-    </header>
-
-    <main id="main" tabindex="-1">
-      <h1>Conferences</h1>
-      <p class="lead">Find where bioinformatics happens next. Track conferences. Never miss a deadline.</p>
-
-      <section class="filters" aria-label="Conference filters">
-        <div>
-          <label for="q">Search</label>
-          <input id="q" type="search" placeholder="Search" autocomplete="off" />
-        </div>
-
-        <div>
-          <label for="region">Region</label>
-          <select id="region">
-            <option value="all">All</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="topic">Topic</label>
-          <select id="topic">
-            <option value="all">All</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="format">Format</label>
-          <select id="format">
-            <option value="all">All</option>
-          </select>
-        </div>
-
-        <div>
-          <label for="deadline">Deadline</label>
-          <select id="deadline">
-            <option value="all">All</option>
-            <option value="only">Only with deadline</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="sr-only" for="reset">Reset filters</label>
-          <button id="reset" class="btn" type="button">Reset</button>
-        </div>
-      </section>
-
-      <div class="viewbar" aria-label="View options">
-        <div class="seg" role="group" aria-label="View toggle">
-          <button id="viewCards" type="button" aria-pressed="true">Cards</button>
-          <button id="viewTable" type="button" aria-pressed="false">Table</button>
-        </div>
-        <p class="status" id="status" role="status" aria-live="polite"></p>
-      </div>
-
-      <section class="grid" id="grid" aria-label="Conference cards"></section>
-
-      <section class="tablewrap" id="tablewrap" aria-label="Conference table" hidden>
-        <table>
-          <thead>
-            <tr>
-              <th scope="col" id="th-name" aria-sort="none">
-                <button class="thbtn" type="button" data-sort="name" aria-label="Sort by conference name">Conference</button>
-              </th>
-
-              <th scope="col" id="th-dates" aria-sort="none">
-                <button class="thbtn" type="button" data-sort="dates" aria-label="Sort by dates">Dates</button>
-              </th>
-
-              <th scope="col">Location</th>
-              <th scope="col">Region</th>
-              <th scope="col">Format</th>
-              <th scope="col">Topics</th>
-
-              <th scope="col" id="th-deadline" aria-sort="ascending">
-                <button class="thbtn" type="button" data-sort="deadline" aria-label="Sort by deadline">Deadline</button>
-              </th>
-
-              <th scope="col">Website</th>
-            </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
-        </table>
-      </section>
-    </main>
-
-    <footer aria-label="Footer">
-      <div>© <span id="year" aria-label="Current year"></span> Omicentra</div>
-      <div><a href="/index.html">Home</a></div>
-    </footer>
+<header>
+  <div class="wrap topbar">
+    <a class="brand" href="/" aria-label="Omicentra home">
+      <span class="dot" aria-hidden="true"></span>
+      Omicentra
+    </a>
+    <nav aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a href="/conferences.html" aria-current="page">Conferences</a>
+    </nav>
   </div>
-
-  <script>
-    document.getElementById("year").textContent = new Date().getFullYear();
-
-    const DATA_URL = "/data/conferences.json";
-    const URGENT_DAYS = 30;
-
-    const q = document.getElementById("q");
-    const regionSel = document.getElementById("region");
-    const topicSel = document.getElementById("topic");
-    const formatSel = document.getElementById("format");
-    const deadlineSel = document.getElementById("deadline");
-    const resetBtn = document.getElementById("reset");
-
-    const viewCardsBtn = document.getElementById("viewCards");
-    const viewTableBtn = document.getElementById("viewTable");
-
-    const grid = document.getElementById("grid");
-    const tableWrap = document.getElementById("tablewrap");
-    const tbody = document.getElementById("tbody");
-    const statusEl = document.getElementById("status");
-
-    const thName = document.getElementById("th-name");
-    const thDates = document.getElementById("th-dates");
-    const thDeadline = document.getElementById("th-deadline");
-
-    let conferences = [];
-    let currentView = "cards";
-
-    // Default sort: shortest time to deadline first
-    let sortKey = "deadline";
-    let sortDir = "asc";
-
-    function escapeHtml(s){
-      return String(s)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#39;");
-    }
-
-    function midnightTs(){
-      const now = new Date();
-      return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    }
-
-    function parseIsoMidnight(iso){
-      if (!iso) return null;
-      const t = Date.parse(iso + "T00:00:00");
-      return Number.isNaN(t) ? null : t;
-    }
-
-    // Remove past or ongoing conferences
-    function isConferencePastOrOngoing(c){
-      const today = midnightTs();
-      const start = parseIsoMidnight(c.start_date);
-      const end = parseIsoMidnight(c.end_date);
-
-      if (start === null && end === null) return false;
-
-      if (start !== null && end === null) return start <= today;
-      if (start === null && end !== null) return end < today;
-
-      if (end < today) return true;
-      if (start <= today && end >= today) return true;
-      return false;
-    }
-
-    function formatDate(iso){
-      if (!iso) return "TBA";
-      const d = new Date(iso + "T00:00:00");
-      if (Number.isNaN(d.getTime())) return "TBA";
-      return d.toLocaleDateString(undefined, { year:"numeric", month:"short", day:"2-digit" });
-    }
-
-    // Same year: year once. Same month: start day only.
-    function formatDateRange(startIso, endIso){
-      if (!startIso && !endIso) return "TBA";
-      if (startIso && !endIso) return formatDate(startIso);
-      if (!startIso && endIso) return formatDate(endIso);
-
-      const start = new Date(startIso + "T00:00:00");
-      const end = new Date(endIso + "T00:00:00");
-      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "TBA";
-
-      const sameYear = start.getFullYear() === end.getFullYear();
-      const sameMonth = sameYear && start.getMonth() === end.getMonth();
-
-      const sDay = start.toLocaleDateString(undefined, { day:"2-digit" });
-      const sMon = start.toLocaleDateString(undefined, { month:"short" });
-      const eDay = end.toLocaleDateString(undefined, { day:"2-digit" });
-      const eMon = end.toLocaleDateString(undefined, { month:"short" });
-
-      if (sameMonth){
-        const year = start.getFullYear();
-        return `${sDay} – ${eDay} ${eMon} ${year}`;
-      }
-      if (sameYear){
-        const year = start.getFullYear();
-        return `${sDay} ${sMon} – ${eDay} ${eMon} ${year}`;
-      }
-      return `${formatDate(startIso)} – ${formatDate(endIso)}`;
-    }
-
-    function toKey(s){
-      return String(s || "").trim().toLowerCase().replace(/\s+/g, "-");
-    }
-
-    function uniqSorted(arr){
-      return Array.from(new Set(arr)).sort((a,b)=>a.localeCompare(b));
-    }
-
-    function normalizeRegion(v){
-      const x = String(v || "").trim();
-      if (!x) return "Unknown";
-      if (x.toLowerCase() === "usa") return "USA";
-      return x;
-    }
-
-    function normalizeFormat(v){
-      const x = String(v || "").trim().toLowerCase();
-      if (!x) return "unknown";
-      return x;
-    }
-
-    function topicList(c){
-      const t = Array.isArray(c.topic) ? c.topic : (c.topic ? [c.topic] : []);
-      return t.map(x => String(x)).filter(Boolean);
-    }
-
-    function buildSelect(selectEl, values){
-      const current = selectEl.value || "all";
-      selectEl.innerHTML = '<option value="all">All</option>';
-      for (const v of values){
-        const opt = document.createElement("option");
-        opt.value = toKey(v);
-        opt.textContent = v;
-        selectEl.appendChild(opt);
-      }
-      if ([...selectEl.options].some(o => o.value === current)) selectEl.value = current;
-    }
-
-    // Shorten long locations (drop overly specific first segment, then ellipsis if still long)
-    function shortLocation(c){
-      const country = String(c.location_country || "").trim();
-      let city = String(c.location_city || "").trim();
-
-      if (!city && country) return country;
-      if (!country && city) return city;
-      if (!city && !country) return "TBA";
-
-      const parts = city.split(",").map(s => s.trim()).filter(Boolean);
-      if (parts.length >= 3){
-        city = parts.slice(1).join(", ");
-      }
-
-      const cityEndsWithCountry = country && city.toLowerCase().endsWith(country.toLowerCase());
-      let loc = cityEndsWithCountry ? city : `${city}, ${country}`;
-
-      if (loc.length > 34){
-        const keepCountry = country ? `, ${country}` : "";
-        const shortBase = (cityEndsWithCountry ? city : city).slice(0, 22).trimEnd();
-        loc = `${shortBase}…${keepCountry}`;
-      }
-
-      return loc;
-    }
-
-    function conferenceDateRange(c){
-      return formatDateRange(c.start_date, c.end_date);
-    }
-
-    function conferenceDeadline(c){
-      return c.submission_deadline ? formatDate(c.submission_deadline) : "—";
-    }
-
-    function deadlineDaysLeft(iso){
-      if (!iso) return Infinity;
-      const d = parseIsoMidnight(iso);
-      if (d === null) return Infinity;
-      const diffDays = Math.floor((d - midnightTs()) / (24*60*60*1000));
-      if (diffDays < 0) return Infinity; // past deadlines go last
-      return diffDays;
-    }
-
-    function deadlineUrgency(iso){
-      const days = deadlineDaysLeft(iso);
-      const isUrgent = Number.isFinite(days) && days <= URGENT_DAYS;
-      return { isUrgent, days: Number.isFinite(days) ? days : null };
-    }
-
-    function renderCard(c){
-      const name = c.name || "Untitled";
-      const website = c.website || "#";
-      const format = normalizeFormat(c.format);
-
-      const { isUrgent } = deadlineUrgency(c.submission_deadline);
-
-      const chips = [];
-      chips.push({ text: shortLocation(c), cls: "chip" });
-      chips.push({ text: conferenceDateRange(c), cls: "chip" });
-
-      if (c.submission_deadline){
-        chips.push({
-          text: `Deadline: ${formatDate(c.submission_deadline)}`,
-          cls: `chip chip--deadline${isUrgent ? " chip--urgent" : ""}`
-        });
-      }
-
-      const chipHtml = chips
-        .filter(x => x.text && x.text !== "TBA")
-        .map(x => `<span class="${x.cls}">${escapeHtml(x.text)}</span>`)
-        .join("");
-
-      const article = document.createElement("article");
-      article.className = "card";
-
-      const isOnsite = (format === "onsite");
-      article.classList.add(isOnsite ? "card--onsite" : "card--remote");
-      if (isUrgent) article.classList.add("card--urgent");
-
-      article.dataset.title = String(name).toLowerCase();
-      article.dataset.region = toKey(normalizeRegion(c.region));
-      article.dataset.format = toKey(format);
-      article.dataset.topic = topicList(c).map(t => toKey(t)).join("|");
-      article.dataset.deadline = c.submission_deadline ? String(c.submission_deadline) : "";
-
-      article.innerHTML = `
-        <h2 class="card-title">
-          <a class="card-title-link" href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer"
-             aria-label="Open conference website: ${escapeHtml(name)}">
-            ${escapeHtml(name)}
-          </a>
-        </h2>
-        <div class="meta">${chipHtml}</div>
-      `;
-
-      return article;
-    }
-
-    function renderRow(c){
-      const name = c.name || "Untitled";
-      const website = c.website || "#";
-      const region = normalizeRegion(c.region);
-      const format = normalizeFormat(c.format);
-      const topics = topicList(c);
-
-      const tr = document.createElement("tr");
-      tr.dataset.title = String(name).toLowerCase();
-      tr.dataset.region = toKey(region);
-      tr.dataset.format = toKey(format);
-      tr.dataset.topic = topics.map(t => toKey(t)).join("|");
-      tr.dataset.deadline = c.submission_deadline ? String(c.submission_deadline) : "";
-
-      tr.innerHTML = `
-        <td class="tname">${escapeHtml(name)}</td>
-        <td>${escapeHtml(conferenceDateRange(c))}</td>
-        <td>${escapeHtml(shortLocation(c))}</td>
-        <td>${escapeHtml(region)}</td>
-        <td>${escapeHtml(format)}</td>
-        <td>${escapeHtml(topics.join(", ") || "—")}</td>
-        <td>${escapeHtml(conferenceDeadline(c))}</td>
-        <td class="tlink">
-          <a href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer"
-             aria-label="Open conference website: ${escapeHtml(name)}">
-            Website
-          </a>
-        </td>
-      `;
-      return tr;
-    }
-
-    function nodesForFiltering(){
-      return currentView === "cards"
-        ? Array.from(grid.children)
-        : Array.from(tbody.children);
-    }
-
-    function applyFilters(){
-      const qv = q.value.trim().toLowerCase();
-      const rv = regionSel.value;
-      const tv = topicSel.value;
-      const fv = formatSel.value;
-      const dv = deadlineSel.value;
-
-      let count = 0;
-
-      for (const node of nodesForFiltering()){
-        const title = node.dataset.title || "";
-        const r = node.dataset.region || "all";
-        const f = node.dataset.format || "all";
-        const topics = (node.dataset.topic || "").split("|").filter(Boolean);
-        const hasDeadline = (node.dataset.deadline || "") !== "";
-
-        const matchQ = qv === "" || title.includes(qv);
-        const matchR = rv === "all" || r === rv;
-        const matchF = fv === "all" || f === fv;
-        const matchT = tv === "all" || topics.includes(tv);
-        const matchD = dv === "all" || (dv === "only" && hasDeadline);
-
-        const ok = matchQ && matchR && matchT && matchF && matchD;
-
-        node.style.display = ok ? "" : "none";
-        if (ok) count++;
-      }
-
-      statusEl.textContent = `${count} conference${count === 1 ? "" : "s"}`;
-    }
-
-    function setView(view){
-      currentView = view;
-      const isCards = view === "cards";
-
-      viewCardsBtn.setAttribute("aria-pressed", String(isCards));
-      viewTableBtn.setAttribute("aria-pressed", String(!isCards));
-
-      grid.hidden = !isCards;
-      tableWrap.hidden = isCards;
-
-      applyFilters();
-
-      try { localStorage.setItem("omicentra_view", view); } catch {}
-    }
-
-    function sortConferences(){
-      const dir = sortDir === "asc" ? 1 : -1;
-
-      conferences.sort((a, b) => {
-        if (sortKey === "name"){
-          const an = String(a.name || "").toLowerCase();
-          const bn = String(b.name || "").toLowerCase();
-          return an.localeCompare(bn) * dir;
-        }
-
-        if (sortKey === "dates"){
-          const as = parseIsoMidnight(a.start_date) ?? Infinity;
-          const bs = parseIsoMidnight(b.start_date) ?? Infinity;
-          if (as !== bs) return (as - bs) * dir;
-
-          const ae = parseIsoMidnight(a.end_date) ?? Infinity;
-          const be = parseIsoMidnight(b.end_date) ?? Infinity;
-          return (ae - be) * dir;
-        }
-
-        // deadline by days left
-        const ad = deadlineDaysLeft(a.submission_deadline);
-        const bd = deadlineDaysLeft(b.submission_deadline);
-        if (ad !== bd) return (ad - bd) * dir;
-
-        // tie-breaker: upcoming start date
-        const as = parseIsoMidnight(a.start_date) ?? Infinity;
-        const bs = parseIsoMidnight(b.start_date) ?? Infinity;
-        return (as - bs) * dir;
-      });
-    }
-
-    function updateAriaSort(){
-      const none = "none";
-      const asc = "ascending";
-      const desc = "descending";
-
-      thName.setAttribute("aria-sort", sortKey === "name" ? (sortDir === "asc" ? asc : desc) : none);
-      thDates.setAttribute("aria-sort", sortKey === "dates" ? (sortDir === "asc" ? asc : desc) : none);
-      thDeadline.setAttribute("aria-sort", sortKey === "deadline" ? (sortDir === "asc" ? asc : desc) : none);
-    }
-
-    function rerender(){
-      grid.innerHTML = "";
-      tbody.innerHTML = "";
-      for (const c of conferences){
-        grid.appendChild(renderCard(c));
-        tbody.appendChild(renderRow(c));
-      }
-      updateAriaSort();
-      applyFilters();
-    }
-
-    function setSort(key){
-      if (sortKey === key){
-        sortDir = (sortDir === "asc") ? "desc" : "asc";
-      } else {
-        sortKey = key;
-        sortDir = "asc";
-      }
-      sortConferences();
-      rerender();
-    }
-
-    function attachSortHandlers(){
-      const buttons = Array.from(document.querySelectorAll(".thbtn[data-sort]"));
-      for (const b of buttons){
-        b.addEventListener("click", () => {
-          const key = b.getAttribute("data-sort");
-          if (key === "name" || key === "dates" || key === "deadline") setSort(key);
-        });
-      }
-    }
-
-    async function loadData(){
-      statusEl.textContent = "Loading…";
-
-      const res = await fetch(DATA_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error(`Failed to load ${DATA_URL} (${res.status})`);
-
-      const data = await res.json();
-      if (!Array.isArray(data)) throw new Error("Invalid JSON: expected an array");
-
-      // Filter out past/ongoing
-      const upcoming = data.filter(c => !isConferencePastOrOngoing(c));
-      conferences = upcoming.slice();
-
-      // Build filter lists from upcoming only
-      const regions = uniqSorted(conferences.map(c => normalizeRegion(c.region)).filter(Boolean));
-      const formats = uniqSorted(conferences.map(c => normalizeFormat(c.format)).filter(Boolean));
-      const topics = uniqSorted(conferences.flatMap(c => topicList(c)).filter(Boolean));
-
-      buildSelect(regionSel, regions);
-      buildSelect(topicSel, topics);
-
-      formatSel.innerHTML = '<option value="all">All</option>';
-      for (const f of formats){
-        const opt = document.createElement("option");
-        opt.value = toKey(f);
-        opt.textContent = f; // lowercase
-        formatSel.appendChild(opt);
-      }
-
-      // Default sort: shortest time to deadline
-      sortKey = "deadline";
-      sortDir = "asc";
-      sortConferences();
-      rerender();
-
-      // Restore view preference
-      let saved = "cards";
-      try { saved = localStorage.getItem("omicentra_view") || "cards"; } catch {}
-      setView(saved === "table" ? "table" : "cards");
-
-      attachSortHandlers();
-    }
-
-    q.addEventListener("input", applyFilters);
-    regionSel.addEventListener("change", applyFilters);
-    topicSel.addEventListener("change", applyFilters);
-    formatSel.addEventListener("change", applyFilters);
-    deadlineSel.addEventListener("change", applyFilters);
-
-    resetBtn.addEventListener("click", () => {
-      q.value = "";
-      regionSel.value = "all";
-      topicSel.value = "all";
-      formatSel.value = "all";
-      deadlineSel.value = "all";
-      applyFilters();
-      q.focus();
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>Upcoming Conferences</h1>
+    <p class="lead">Browse bioinformatics conferences, filter by region and sort by submission deadline. This page is driven by <code>data/conferences.json</code>.</p>
+  </section>
+
+  <section class="controls" aria-label="Filters">
+    <div class="control">
+      <label for="q">Search</label>
+      <input id="q" type="search" placeholder="Name, city, country…" />
+    </div>
+
+    <div class="control">
+      <label for="region">Region</label>
+      <select id="region">
+        <option value="">All regions</option>
+        <option>Europe</option>
+        <option>USA</option>
+        <option>Asia</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="control">
+      <label for="sort">Sort</label>
+      <select id="sort">
+        <option value="deadline">Submission deadline</option>
+        <option value="start">Start date</option>
+        <option value="name">Name</option>
+      </select>
+    </div>
+
+    <div class="stats" aria-live="polite">
+      <span class="pill"><span aria-hidden="true">●</span> <span id="count">0</span> results</span>
+    </div>
+  </section>
+
+  <section class="grid" id="grid" aria-label="Conference results">
+    <div class="empty">Loading…</div>
+  </section>
+</main>
+
+<script>
+  const elGrid = document.getElementById('grid');
+  const elQ = document.getElementById('q');
+  const elRegion = document.getElementById('region');
+  const elSort = document.getElementById('sort');
+  const elCount = document.getElementById('count');
+
+  let data = [];
+
+  function fmtDate(iso){
+    if(!iso) return "";
+    const d = new Date(iso + "T00:00:00");
+    return d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'2-digit' });
+  }
+
+  function safe(x){ return (x ?? "").toString(); }
+
+  function render(){
+    const q = safe(elQ.value).toLowerCase().trim();
+    const region = elRegion.value;
+
+    let rows = data.filter(x=>{
+      const hay = `${safe(x.name)} ${safe(x.location_city)} ${safe(x.location_country)}`.toLowerCase();
+      const okQ = !q || hay.includes(q);
+      const okR = !region || (x.region === region);
+      return okQ && okR;
     });
 
-    viewCardsBtn.addEventListener("click", () => setView("cards"));
-    viewTableBtn.addEventListener("click", () => setView("table"));
-
-    loadData().catch(err => {
-      console.error(err);
-      statusEl.textContent = "Failed to load conferences.";
-      grid.innerHTML = "";
-      tbody.innerHTML = "";
+    const sort = elSort.value;
+    rows.sort((a,b)=>{
+      if(sort==="name") return safe(a.name).localeCompare(safe(b.name));
+      if(sort==="start") return safe(a.start_date).localeCompare(safe(b.start_date));
+      return safe(a.submission_deadline).localeCompare(safe(b.submission_deadline));
     });
-  </script>
+
+    elCount.textContent = rows.length;
+
+    if(rows.length===0){
+      elGrid.innerHTML = `<div class="empty">No results. Try a different search or region.</div>`;
+      return;
+    }
+
+    elGrid.innerHTML = rows.map(x=>{
+      const topics = Array.isArray(x.topic) ? x.topic.join(", ") : safe(x.topic);
+      const deadline = fmtDate(x.submission_deadline);
+      const dates = `${fmtDate(x.start_date)} – ${fmtDate(x.end_date)}`;
+      const loc = [safe(x.location_city), safe(x.location_country)].filter(Boolean).join(", ");
+      const format = safe(x.format) || "—";
+      const site = safe(x.website) || "#";
+
+      return `
+        <article class="card">
+          <div class="badge" aria-hidden="true"></div>
+          <div class="meta">
+            <div class="titleRow">
+              <div style="min-width:0">
+                <h2 class="name">${safe(x.name)}</h2>
+                <div class="topics">${topics}</div>
+              </div>
+            </div>
+          </div>
+          <div class="right">
+            <div class="kv">
+              <div><strong>Deadline:</strong> ${deadline || "—"}</div>
+              <div><strong>Dates:</strong> ${dates.trim()==="–" ? "—" : dates}</div>
+              <div><strong>Location:</strong> ${loc || "—"}</div>
+              <div><strong>Format:</strong> ${format}</div>
+            </div>
+            <a class="btn" href="${site}" target="_blank" rel="noopener">Official website →</a>
+          </div>
+        </article>
+      `;
+    }).join("");
+  }
+
+  async function init(){
+    try{
+      const res = await fetch('/data/conferences.json', {cache:'no-store'});
+      data = await res.json();
+      render();
+    }catch(e){
+      elGrid.innerHTML = `<div class="empty">Could not load <code>/data/conferences.json</code>. Check the file path and JSON syntax.</div>`;
+    }
+  }
+
+  elQ.addEventListener('input', render);
+  elRegion.addEventListener('change', render);
+  elSort.addEventListener('change', render);
+
+  init();
+</script>
 </body>
 </html>
