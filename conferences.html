@@ -324,57 +324,58 @@
     }
 
     function renderCard(c){
-      const name = c.name || "Untitled";
-      const website = c.website || "#";
-      const format = normalizeFormat(c.format);
+  const name = c.name || "Untitled";
+  const website = c.website || "#";
+  const format = normalizeFormat(c.format);
 
-      const { isUrgent } = deadlineUrgency(c.submission_deadline);
+  const { isUrgent } = deadlineUrgency(c.submission_deadline);
 
-      const chips = [];
-      chips.push({ text: shortLocation(c), cls: "chip" });
-      chips.push({ text: conferenceDateRange(c), cls: "chip" });
-      if (c.submission_deadline){
-        chips.push({
-          text: `Deadline: ${formatDate(c.submission_deadline)}`,
-          cls: `chip chip--deadline${isUrgent ? " chip--urgent" : ""}`
-        });
-      }
+  const chips = [];
+  chips.push({ text: shortLocation(c), cls: "chip" });
+  chips.push({ text: conferenceDateRange(c), cls: "chip" });
 
-      const chipHtml = chips
-        .filter(x => x.text && x.text !== "TBA")
-        .map(x => `<span class="${x.cls}">${escapeHtml(x.text)}</span>`)
-        .join("");
+  if (c.submission_deadline){
+    chips.push({
+      text: `Deadline: ${formatDate(c.submission_deadline)}`,
+      cls: `chip chip--deadline${isUrgent ? " chip--urgent" : ""}`
+    });
+  }
 
-      const article = document.createElement("article");
-      article.className = "card";
+  const chipHtml = chips
+    .filter(x => x.text && x.text !== "TBA")
+    .map(x => `<span class="${x.cls}">${escapeHtml(x.text)}</span>`)
+    .join("");
 
-      // Color by format
-      const isOnsite = (format === "onsite");
-      article.classList.add(isOnsite ? "card--onsite" : "card--remote");
+  const article = document.createElement("article");
+  article.className = "card";
 
-      // Urgent styling
-      if (isUrgent) article.classList.add("card--urgent");
+  // format color
+  const isOnsite = (format === "onsite");
+  article.classList.add(isOnsite ? "card--onsite" : "card--remote");
 
-      article.dataset.title = String(name).toLowerCase();
-      article.dataset.region = toKey(normalizeRegion(c.region));
-      article.dataset.format = toKey(format);
-      article.dataset.topic = topicList(c).map(t => toKey(t)).join("|");
-      article.dataset.deadline = c.submission_deadline ? String(c.submission_deadline) : "";
+  // urgent styling
+  if (isUrgent) article.classList.add("card--urgent");
 
-      article.innerHTML = `
-        <h2>${escapeHtml(name)}</h2>
-        <div class="meta">
-          ${chipHtml}
-        </div>
-        <div class="card-actions">
-          <a class="cta cta--tiny" href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer"
-             aria-label="Open conference website: ${escapeHtml(name)}">
-            Website
-          </a>
-        </div>
-      `;
-      return article;
-    }
+  article.dataset.title = String(name).toLowerCase();
+  article.dataset.region = toKey(normalizeRegion(c.region));
+  article.dataset.format = toKey(format);
+  article.dataset.topic = topicList(c).map(t => toKey(t)).join("|");
+  article.dataset.deadline = c.submission_deadline ? String(c.submission_deadline) : "";
+
+  article.innerHTML = `
+    <h2>${escapeHtml(name)}</h2>
+    <div class="meta">${chipHtml}</div>
+    <div class="card-actions">
+      <a class="cta cta--tiny" href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer"
+         aria-label="Open conference website: ${escapeHtml(name)}">
+        Website
+      </a>
+    </div>
+  `;
+
+  return article;
+}
+
 
     function renderRow(c){
       const name = c.name || "Untitled";
