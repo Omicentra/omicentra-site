@@ -596,3 +596,30 @@ footer{
   color: inherit;
   text-decoration: underline;
 }
+/* ===========================
+   TOP NAV (Home / Contact)
+=========================== */
+
+.top-nav{
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.top-nav__link{
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+  font-weight: 600;
+  text-decoration: none; /* remove default underline */
+}
+
+.top-nav__link:hover{
+  border-color: #cbd5e1;
+  background: #f9fafb;
+}
