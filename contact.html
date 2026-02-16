@@ -1,0 +1,16 @@
+<form id="contact-form" method="POST" action="https://omicentra-contact.omicentra.workers.dev">
+
+  <input type="text" name="name" placeholder="Name" required />
+  <input type="email" name="email" placeholder="Email" required />
+  <textarea name="message" placeholder="Message" required></textarea>
+
+  <!-- Turnstile widget -->
+  <div class="cf-turnstile" 
+       data-sitekey="TUTAJ_WKLEJ_SITE_KEY">
+  </div>
+
+  <button type="submit">Send</button>
+
+</form>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
