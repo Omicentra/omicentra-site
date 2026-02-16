@@ -1,16 +1,196 @@
-<form id="contact-form" method="POST" action="https://omicentra-contact.omicentra.workers.dev">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact | Omicentra</title>
 
-  <input type="text" name="name" placeholder="Name" required />
-  <input type="email" name="email" placeholder="Email" required />
-  <textarea name="message" placeholder="Message" required></textarea>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f9fafb;
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+    }
 
-  <!-- Turnstile widget -->
-  <div class="cf-turnstile" 
-       data-sitekey="0x4AAAAAACdzzjex3mtyVKAy">
+    .contact-wrapper {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
+      margin-bottom: 24px;
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      font-size: 15px;
+      transition: 0.2s;
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+    }
+
+    textarea {
+      min-height: 150px;
+      resize: vertical;
+    }
+
+    button {
+      background: #111827;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #1f2937;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 20px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      display: none;
+    }
+
+    .status.success {
+      background: #ecfdf5;
+      border: 1px solid #10b981;
+      color: #065f46;
+      display: block;
+    }
+
+    .status.error {
+      background: #fef2f2;
+      border: 1px solid #ef4444;
+      color: #7f1d1d;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="contact-wrapper">
+    <h1>Contact</h1>
+
+    <form id="contact-form" novalidate>
+
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" type="text" name="name" required />
+      </div>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" name="email" required />
+      </div>
+
+      <div class="field">
+        <label for="message">Message</label>
+        <textarea id="message" name="message" required></textarea>
+      </div>
+
+      <div class="field">
+        <div class="cf-turnstile"
+             data-sitekey="YOUR_SITE_KEY">
+        </div>
+      </div>
+
+      <button id="submit-btn" type="submit">Send message</button>
+
+      <div id="form-status" class="status"></div>
+
+    </form>
   </div>
 
-  <button type="submit">Send</button>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
-</form>
+  <script>
+    const form = document.getElementById("contact-form");
+    const statusBox = document.getElementById("form-status");
+    const submitBtn = document.getElementById("submit-btn");
 
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    const ENDPOINT = "https://omicentra-contact.omicentra.workers.dev";
+
+    function showStatus(type, message) {
+      statusBox.className = "status " + type;
+      statusBox.textContent = message;
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (!form.checkValidity()) {
+        showStatus("error", "Please complete all required fields.");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Sending...";
+
+      try {
+        const formData = new FormData(form);
+
+        const response = await fetch(ENDPOINT, {
+          method: "POST",
+          body: formData
+        });
+
+        const text = await response.text();
+
+        if (response.ok) {
+          showStatus("success", "Thank you for your message.");
+          form.reset();
+          if (window.turnstile) turnstile.reset();
+        } else {
+          showStatus("error", text || "Something went wrong.");
+        }
+
+      } catch (error) {
+        showStatus("error", "Network error. Please try again.");
+      }
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Send message";
+    });
+  </script>
+
+</body>
+</html>
