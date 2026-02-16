@@ -8,7 +8,6 @@
   <!-- ===== MAINTENANCE SWITCH ===== -->
   <script>
     window.MAINTENANCE_MODE = false; // set to true to enable maintenance
-
     if (window.MAINTENANCE_MODE) {
       window.location.replace("/maintenance.html");
     }
@@ -103,6 +102,14 @@
       max-width: 60ch;
     }
 
+    .btn-row{
+      display:flex;
+      gap:12px;
+      justify-content:center;
+      flex-wrap:wrap;
+      margin-top: 6px;
+    }
+
     .btn{
       display:inline-flex;
       min-height:44px;
@@ -122,6 +129,44 @@
       background: linear-gradient(135deg, rgba(124,58,237,.16), rgba(6,182,212,.14));
     }
 
+    .btn-ghost{
+      background: rgba(255,255,255,.65);
+    }
+
+    /* --- CONTACT SECTION --- */
+    .contact{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 24px 72px;
+    }
+
+    .card{
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.78);
+      box-shadow: 0 16px 40px rgba(17,24,39,.06);
+      padding: 22px;
+    }
+
+    .contact h2{
+      margin: 0 0 6px;
+      font-size: 20px;
+      letter-spacing: -0.2px;
+    }
+
+    .contact p{
+      margin: 0 0 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      max-width: 70ch;
+    }
+
+    .contact .mini{
+      font-size: 13px;
+      color: var(--muted2);
+      margin-top: 10px;
+    }
+
     footer{
       max-width: 980px;
       margin: 0 auto;
@@ -131,6 +176,9 @@
       color: var(--muted2);
       font-size: 12px;
     }
+
+    footer a{ color: inherit; text-decoration: none; border-bottom: 1px dashed rgba(75,85,99,.35); }
+    footer a:hover{ border-bottom-color: rgba(75,85,99,.8); }
   </style>
 </head>
 
@@ -156,15 +204,36 @@
         Launching soon. Tracking conferences and research trends worldwide.
       </p>
 
-      <a class="btn btn-primary" href="/conferences.html">
-        Go to Conferences →
-      </a>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="/conferences.html">Go to Conferences →</a>
+        <a class="btn btn-ghost" href="/contact.html">Contact</a>
+      </div>
+    </section>
+
+    <!-- Contact block -->
+    <section class="contact" aria-label="Contact">
+      <div class="card">
+        <h2>Contact</h2>
+        <p>
+          Want to suggest a conference, report an incorrect deadline, or discuss collaboration?
+          Use the contact form — it’s protected against spam bots.
+        </p>
+        <div class="btn-row" style="justify-content:flex-start; margin:0;">
+          <a class="btn btn-primary" href="/contact.html">Open contact form →</a>
+        </div>
+        <div class="mini">
+          No email address is published on the site.
+        </div>
+      </div>
     </section>
   </main>
 
   <footer>
     <div>© <span id="year"></span> Omicentra</div>
-    <div><a href="/conferences.html">Conferences</a></div>
+    <div style="display:flex; gap:14px;">
+      <a href="/conferences.html">Conferences</a>
+      <a href="/contact.html">Contact</a>
+    </div>
   </footer>
 
   <script>
