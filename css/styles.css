@@ -579,3 +579,20 @@ footer{
   margin-top: 6px;
 }
 
+/* ===========================
+   CONTACT DISCLAIMER 
+   Ensures disclaimer is visible
+=========================== */
+
+.contact-disclaimer {
+  display: block; /* force visibility */
+  margin-top: 12px;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.contact-disclaimer a {
+  color: inherit;
+  text-decoration: underline;
+}
