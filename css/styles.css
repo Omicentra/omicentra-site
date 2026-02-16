@@ -596,27 +596,3 @@ footer{
   color: inherit;
   text-decoration: underline;
 }
-/* Minimal top links (editorial style) */
-
-.top-links {
-  margin-bottom: 22px;
-  font-weight: 600;
-  font-size: 14px;
-  color: #374151;
-}
-
-.top-links a {
-  text-decoration: none;
-  color: #374151;
-  transition: opacity 0.15s ease;
-}
-
-.top-links a:hover {
-  opacity: 0.65;
-}
-
-.top-links .divider {
-  margin: 0 8px;
-  color: #9ca3af;
-}
-
