@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Contact | Omicentra</title>
 
-  <!-- IMPORTANT: load your global stylesheet -->
-  <link rel="stylesheet" href="/css/style.css" />
+  <!-- Correct CSS file -->
+  <link rel="stylesheet" href="/css/styles.css" />
 </head>
 
 <body>
@@ -32,7 +32,9 @@
       </div>
 
       <div>
-        <div class="cf-turnstile" data-sitekey="0x4AAAAAACdzzjex3mtyVKAy"></div>
+        <div class="cf-turnstile"
+             data-sitekey="0x4AAAAAACdzzjex3mtyVKAy">
+        </div>
       </div>
 
       <button id="submit-btn" type="submit">Send message</button>
@@ -45,7 +47,7 @@
   <!-- Turnstile -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
-  <!-- Contact form submit (AJAX) -->
+  <!-- AJAX submit -->
   <script>
     const ENDPOINT = "https://omicentra-contact.omicentra.workers.dev";
     const form = document.getElementById("contact-form");
