@@ -5,13 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Contact | Omicentra</title>
 
-  <!-- Correct CSS file -->
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
 
 <body>
 
   <div class="contact-wrapper">
+
+    <!-- Top navigation -->
+    <div style="margin-bottom:20px;">
+      <a href="/index.html" style="text-decoration:none; font-weight:600; color:#374151;">
+        ← Home
+      </a>
+    </div>
+
     <h1>Contact</h1>
 
     <form id="contact-form" class="contact-form" novalidate>
@@ -44,10 +51,8 @@
     </form>
   </div>
 
-  <!-- Turnstile -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
-  <!-- AJAX submit -->
   <script>
     const ENDPOINT = "https://omicentra-contact.omicentra.workers.dev";
     const form = document.getElementById("contact-form");
