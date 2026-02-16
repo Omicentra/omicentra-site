@@ -596,30 +596,27 @@ footer{
   color: inherit;
   text-decoration: underline;
 }
-/* ===========================
-   TOP NAV (Home / Contact)
-=========================== */
+/* Minimal top links (editorial style) */
 
-.top-nav{
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 18px;
-}
-
-.top-nav__link{
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  color: #374151;
+.top-links {
+  margin-bottom: 22px;
   font-weight: 600;
-  text-decoration: none; /* remove default underline */
+  font-size: 14px;
+  color: #374151;
 }
 
-.top-nav__link:hover{
-  border-color: #cbd5e1;
-  background: #f9fafb;
+.top-links a {
+  text-decoration: none;
+  color: #374151;
+  transition: opacity 0.15s ease;
 }
+
+.top-links a:hover {
+  opacity: 0.65;
+}
+
+.top-links .divider {
+  margin: 0 8px;
+  color: #9ca3af;
+}
+
