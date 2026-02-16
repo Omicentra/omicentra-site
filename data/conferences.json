@@ -45,7 +45,7 @@
 {"id":"ga4gh-14th-plenary-2026","name":"GA4GH 14th Plenary","topic":["genomics","bioinformatics","health data sharing"],"submission_deadline":null,"start_date":"2026-09-28","end_date":"2026-10-02","location_city":"Singapore","location_country":"Singapore","region":"Asia","format":"onsite","website":"https://www.ga4gh.org/event/14th-plenary/"},
 {"id":"ieee-bibm-2026","name":"IEEE International Conference on Bioinformatics and Biomedicine (IEEE BIBM 2026)","topic":["bioinformatics","biomedical informatics","computational biology"],"submission_deadline":"2026-07-05","start_date":"2026-12-01","end_date":"2026-12-04","location_city":"Dallas, TX","location_country":"USA","region":"USA","format":"onsite","website":"https://ieeebibm.org/"},
 {"id":"icbb-2026-vienna-hybrid","name":"13th International Conference on Bioinformatics and Bioscience (ICBB 2026)","topic":["bioinformatics","bioscience"],"submission_deadline":"2026-02-21","start_date":"2026-03-14","end_date":"2026-03-15","location_city":"Vienna","location_country":"Austria","region":"Europe","format":"hybrid","website":"https://ccseit2026.org/icbb/index"}
-[
+
   {
     "id": "psb-2027",
     "name": "Pacific Symposium on Biocomputing (PSB 2027)",
@@ -275,4 +275,4 @@
   }
 ]
 
-]
+
