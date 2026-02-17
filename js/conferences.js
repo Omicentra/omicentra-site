@@ -390,35 +390,64 @@
   }
 
   function sortConferences(){
-    const dir = sortDir === "asc" ? 1 : -1;
+  const dir = sortDir === "asc" ? 1 : -1;
 
-    conferences.sort((a, b) => {
-      if (sortKey === "name"){
-        const an = String(a.name || "").toLowerCase();
-        const bn = String(b.name || "").toLowerCase();
-        return an.localeCompare(bn) * dir;
-      }
+  function confYear(c){
+    const y =
+      (c.start_date && /^\d{4}/.test(c.start_date)) ? Number(c.start_date.slice(0,4)) :
+      (c.end_date && /^\d{4}/.test(c.end_date)) ? Number(c.end_date.slice(0,4)) :
+      Infinity;
+    return Number.isFinite(y) ? y : Infinity;
+  }
 
-      if (sortKey === "dates"){
-        const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
-        const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
-        return (as - bs) * dir;
-      }
+  function statusRank(info){
+    if (info.status === "soon") return 0;
+    if (info.status === "open") return 1;
+    if (info.status === "closed") return 2;
+    return 3; // unknown / no deadline
+  }
 
-      const ad = computeDeadlineForConference(a).daysLeft;
-      const bd = computeDeadlineForConference(b).daysLeft;
+  conferences.sort((a, b) => {
+    // zachowujemy Twoje istniejące sorty
+    if (sortKey === "name"){
+      const an = String(a.name || "").toLowerCase();
+      const bn = String(b.name || "").toLowerCase();
+      return an.localeCompare(bn) * dir;
+    }
 
-      const aVal = (ad === null) ? Infinity : ad;
-      const bVal = (bd === null) ? Infinity : bd;
-
-      if (aVal !== bVal) return (aVal - bVal) * dir;
-
+    if (sortKey === "dates"){
       const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
       const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
-
       return (as - bs) * dir;
-    });
-  }
+    }
+
+    // === sortKey === "deadline" (default) ===
+
+    // 0) Year bucket
+    const ay = confYear(a);
+    const by = confYear(b);
+    if (ay !== by) return (ay - by) * dir;
+
+    // 1) Status bucket within year
+    const aInfo = computeDeadlineForConference(a);
+    const bInfo = computeDeadlineForConference(b);
+
+    const aRank = statusRank(aInfo);
+    const bRank = statusRank(bInfo);
+    if (aRank !== bRank) return (aRank - bRank) * dir;
+
+    // 2) Days within status
+    const aDays = (aInfo.daysLeft === null) ? Infinity : aInfo.daysLeft;
+    const bDays = (bInfo.daysLeft === null) ? Infinity : bInfo.daysLeft;
+    if (aDays !== bDays) return (aDays - bDays) * dir;
+
+    // 3) Tie-breaker: start_date
+    const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
+    const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
+    return (as - bs) * dir;
+  });
+}
+
 
   function updateAriaSort(){
     const none = "none";
