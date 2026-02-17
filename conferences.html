@@ -316,7 +316,7 @@
 
     function renderCard(c){
       const name = c.name || "Untitled";
-      const website = c.website || "#";
+      const website = c.website_url || "#";
       const format = normalizeFormat(c.format);
 
       const { isUrgent } = deadlineUrgency(c.submission_deadline);
@@ -362,7 +362,7 @@
 
     function renderRow(c){
       const name = c.name || "Untitled";
-      const website = c.website || "#";
+      const website = c.website_url || "#";
       const region = normalizeRegion(c.region);
       const format = normalizeFormat(c.format); // (3) lowercase
       const topics = topicList(c);
