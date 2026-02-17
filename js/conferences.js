@@ -8,7 +8,8 @@
   const SOON_DAYS = 7;
   const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-  function $(id){ return document.getElementById(id); }
+  // ---------- DOM helpers ----------
+  const $ = (id) => document.getElementById(id);
 
   function requireEl(id){
     const el = $(id);
@@ -21,7 +22,7 @@
     if (el) el.textContent = msg;
   }
 
-  // Avoid crashing if loaded on a different page
+  // Avoid running on other pages
   if (!$("grid") || !$("tbody")) return;
 
   let q, regionSel, topicSel, formatSel, deadlineSel, resetBtn;
@@ -54,25 +55,17 @@
     return;
   }
 
+  // ---------- State ----------
   let conferences = [];
   let currentView = "cards"; // "cards" | "table"
 
   let sortKey = "deadline";
   let sortDir = "asc";
 
-  // deadline sort mode: cards/status default, table can switch to strict when header clicked
+  // cards/status default, table can switch to strict when header clicked
   let deadlineSortMode = "status"; // "status" | "strict"
 
-  // --- helpers ---
-  function escapeHtml(s){
-    return String(s)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#39;");
-  }
-
+  // ---------- Utility ----------
   function debounce(fn, delay){
     let t = null;
     return (...args) => {
@@ -108,6 +101,14 @@
     return Number.isNaN(t) ? Infinity : t;
   }
 
+  function toKey(s){
+    return String(s || "").trim().toLowerCase().replace(/\s+/g, "-");
+  }
+
+  function uniqSorted(arr){
+    return Array.from(new Set(arr)).sort((a,b)=>a.localeCompare(b));
+  }
+
   function normalizeRegion(v){
     const x = String(v || "").trim();
     if (!x) return "Unknown";
@@ -121,14 +122,6 @@
     return x;
   }
 
-  function toKey(s){
-    return String(s || "").trim().toLowerCase().replace(/\s+/g, "-");
-  }
-
-  function uniqSorted(arr){
-    return Array.from(new Set(arr)).sort((a,b)=>a.localeCompare(b));
-  }
-
   function topicList(c){
     const t = Array.isArray(c.topic) ? c.topic : (c.topic ? [c.topic] : []);
     return t.map(x => String(x)).filter(Boolean);
@@ -136,29 +129,20 @@
 
   function buildSelect(selectEl, values){
     const current = selectEl.value || "all";
-    selectEl.innerHTML = '<option value="all">All</option>';
+    selectEl.innerHTML = "";
+    const optAll = document.createElement("option");
+    optAll.value = "all";
+    optAll.textContent = "All";
+    selectEl.appendChild(optAll);
+
     for (const v of values){
       const opt = document.createElement("option");
       opt.value = toKey(v);
       opt.textContent = v;
       selectEl.appendChild(opt);
     }
+
     if ([...selectEl.options].some(o => o.value === current)) selectEl.value = current;
-  }
-
-  function isPastOrOngoing(c){
-    const today = todayMidnight();
-    const start = parseIsoMidnight(c.start_date);
-    const end = parseIsoMidnight(c.end_date);
-
-    if (start === null && end === null) return false;
-
-    if (start !== null && end === null) return start <= today;
-    if (start === null && end !== null) return end < today;
-
-    if (end < today) return true;
-    if (start <= today && end >= today) return true;
-    return false;
   }
 
   function formatDate(iso){
@@ -220,11 +204,26 @@
     return loc;
   }
 
-  // --- deadline computation ---
+  function isPastOrOngoing(c){
+    const today = todayMidnight();
+    const start = parseIsoMidnight(c.start_date);
+    const end = parseIsoMidnight(c.end_date);
+
+    if (start === null && end === null) return false;
+
+    if (start !== null && end === null) return start <= today;
+    if (start === null && end !== null) return end < today;
+
+    if (end < today) return true;
+    if (start <= today && end >= today) return true;
+    return false;
+  }
+
+  // ---------- Deadline logic ----------
   function computeDeadlineForConference(c){
     const raw = c.submission_deadline;
 
-    // if no deadline but future event => status "tba"
+    // no deadline but future event => status "tba"
     if (!raw){
       const start = (c.start_date ? Date.parse(c.start_date + "T00:00:00") : null);
       const future = start !== null && !Number.isNaN(start) && start > Date.now();
@@ -304,22 +303,26 @@
     return "status-dot--unknown";
   }
 
-  function createChipSpan(cls, text){
-    const span = document.createElement("span");
-    span.className = cls;
-    span.textContent = text;
-    return span;
+  // ---------- Rendering (DOM-only; no innerHTML from data) ----------
+  function makeEl(tag, className){
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    return el;
   }
 
-  // --- rendering ---
+  function makeTextCell(text, className){
+    const td = makeEl("td", className);
+    td.textContent = text;
+    return td;
+  }
+
   function renderCard(c){
     const name = c.name || "Untitled";
     const website = c.website_url || "#";
     const format = normalizeFormat(c.format);
     const deadlineInfo = c._dl || computeDeadlineForConference(c);
 
-    const article = document.createElement("article");
-    article.className = "card";
+    const article = makeEl("article", "card");
     article.classList.add(format === "onsite" ? "card--onsite" : "card--remote");
 
     article.dataset.title = String(name).toLowerCase();
@@ -328,26 +331,25 @@
     article.dataset.topic = topicList(c).map(t => toKey(t)).join("|");
     article.dataset.deadline = c.submission_deadline ? String(c.submission_deadline) : "";
 
-    const h2 = document.createElement("h2");
+    const h2 = makeEl("h2");
     h2.textContent = name;
 
-    const meta = document.createElement("div");
-    meta.className = "meta";
+    const meta = makeEl("div", "meta");
 
-    meta.appendChild(createChipSpan("chip", shortLocation(c)));
-    meta.appendChild(createChipSpan("chip", formatDateRange(c.start_date, c.end_date)));
+    const chipLoc = makeEl("span", "chip");
+    chipLoc.textContent = shortLocation(c);
+    meta.appendChild(chipLoc);
+
+    const chipDates = makeEl("span", "chip");
+    chipDates.textContent = formatDateRange(c.start_date, c.end_date);
+    meta.appendChild(chipDates);
 
     if (c.submission_deadline){
-      const chip = document.createElement("span");
-      chip.className = "chip chip--deadline";
-
-      const label = statusLabelFor(deadlineInfo.status);
-      const dotClass = dotClassFor(deadlineInfo.status);
-
+      const chip = makeEl("span", "chip chip--deadline");
       chip.appendChild(document.createTextNode(`Deadline: ${formatDate(c.submission_deadline)} `));
 
-      const dot = document.createElement("span");
-      dot.className = `status-dot ${dotClass}`;
+      const label = statusLabelFor(deadlineInfo.status);
+      const dot = makeEl("span", `status-dot ${dotClassFor(deadlineInfo.status)}`);
       dot.setAttribute("title", label);
       dot.setAttribute("aria-label", label);
 
@@ -355,8 +357,7 @@
       meta.appendChild(chip);
     }
 
-    const a = document.createElement("a");
-    a.className = "cta cta--small";
+    const a = makeEl("a", "cta cta--small");
     a.href = website;
     a.target = "_blank";
     a.rel = "noopener noreferrer";
@@ -384,25 +385,28 @@
     tr.dataset.topic = topics.map(t => toKey(t)).join("|");
     tr.dataset.deadline = c.submission_deadline ? String(c.submission_deadline) : "";
 
-    tr.innerHTML = `
-      <td class="tname">${escapeHtml(name)}</td>
-      <td>${escapeHtml(formatDateRange(c.start_date, c.end_date))}</td>
-      <td>${escapeHtml(shortLocation(c))}</td>
-      <td>${escapeHtml(region)}</td>
-      <td>${escapeHtml(format)}</td>
-      <td>${escapeHtml(topics.join(", ") || "—")}</td>
-      <td>${escapeHtml(c.submission_deadline ? formatDate(c.submission_deadline) : "—")}</td>
-      <td class="tlink">
-        <a href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer"
-           aria-label="Open conference website: ${escapeHtml(name)}">
-          Website
-        </a>
-      </td>
-    `;
+    tr.appendChild(makeTextCell(name, "tname"));
+    tr.appendChild(makeTextCell(formatDateRange(c.start_date, c.end_date)));
+    tr.appendChild(makeTextCell(shortLocation(c)));
+    tr.appendChild(makeTextCell(region));
+    tr.appendChild(makeTextCell(format));
+    tr.appendChild(makeTextCell(topics.join(", ") || "—"));
+    tr.appendChild(makeTextCell(c.submission_deadline ? formatDate(c.submission_deadline) : "—"));
+
+    const tdLink = makeEl("td", "tlink");
+    const a = document.createElement("a");
+    a.href = website;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.setAttribute("aria-label", `Open conference website: ${name}`);
+    a.textContent = "Website";
+    tdLink.appendChild(a);
+
+    tr.appendChild(tdLink);
     return tr;
   }
 
-  // --- filtering & view ---
+  // ---------- Filtering / View ----------
   function nodesForFiltering(){
     return currentView === "cards"
       ? Array.from(grid.children)
@@ -462,7 +466,7 @@
     try { localStorage.setItem("omicentra_view", view); } catch {}
   }
 
-  // --- sorting (status/year stable, only days/start obey dir) ---
+  // ---------- Sorting ----------
   function sortConferences(){
     const dir = sortDir === "asc" ? 1 : -1;
 
@@ -471,7 +475,7 @@
       if (status === "open") return 1;
       if (status === "tba") return 2;
       if (status === "closed") return 3;
-      return 4;
+      return 4; // unknown / no deadline / invalid
     }
 
     conferences.sort((a, b) => {
@@ -524,10 +528,12 @@
   function rerender(){
     grid.innerHTML = "";
     tbody.innerHTML = "";
+
     for (const c of conferences){
       grid.appendChild(renderCard(c));
       tbody.appendChild(renderRow(c));
     }
+
     updateAriaSort();
     applyFilters();
   }
@@ -560,6 +566,7 @@
     }
   }
 
+  // ---------- Load ----------
   async function loadData(){
     statusEl.textContent = "Loading…";
 
@@ -588,17 +595,28 @@
     buildSelect(regionSel, regions);
     buildSelect(topicSel, topics);
 
-    formatSel.innerHTML = '<option value="all">All</option>';
-    for (const f of formats){
-      const opt = document.createElement("option");
-      opt.value = toKey(f);
-      opt.textContent = f;
-      formatSel.appendChild(opt);
+    // format select
+    {
+      const current = formatSel.value || "all";
+      formatSel.innerHTML = "";
+      const optAll = document.createElement("option");
+      optAll.value = "all";
+      optAll.textContent = "All";
+      formatSel.appendChild(optAll);
+
+      for (const f of formats){
+        const opt = document.createElement("option");
+        opt.value = toKey(f);
+        opt.textContent = f;
+        formatSel.appendChild(opt);
+      }
+      if ([...formatSel.options].some(o => o.value === current)) formatSel.value = current;
     }
 
     sortKey = "deadline";
     sortDir = "asc";
     deadlineSortMode = "status";
+
     sortConferences();
     rerender();
 
