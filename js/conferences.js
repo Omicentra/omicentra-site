@@ -195,6 +195,77 @@
     return { isUrgent, days: Number.isFinite(d) ? d : null };
   }
 
+const SOON_DAYS = 7;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function isDateOnly(s){
+  return typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+}
+
+function computeDeadlineForConference(c){
+  const raw = c.submission_deadline;
+  if (!raw) return { status: "unknown", daysLeft: null, policy: "none" };
+
+  const policy =
+    c.deadline_policy ||
+    (raw.includes("T") ? "datetime_fixed" : isDateOnly(raw) ? "date_eod_tz" : "unknown");
+
+  // 1) dokładny timestamp (z offsetem)
+  if (policy === "datetime_fixed"){
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return { status: "unknown", daysLeft: null, policy };
+
+    const diff = d.getTime() - Date.now();
+    const daysLeft = Math.ceil(diff / MS_PER_DAY);
+    const status =
+      diff < 0 ? "closed" :
+      daysLeft <= SOON_DAYS ? "soon" :
+      "open";
+
+    return { status, daysLeft, policy };
+  }
+
+  // 2) AoE
+  if (policy === "aoe" && isDateOnly(raw)){
+    const tz = "Etc/GMT+12"; // UTC-12
+    const today = new Date();
+    const todayInAoE = new Date(
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: tz,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      }).format(today)
+    );
+
+    const deadline = new Date(raw + "T00:00:00");
+    const diffDays = Math.floor((deadline - todayInAoE) / MS_PER_DAY);
+
+    const status =
+      diffDays < 0 ? "closed" :
+      diffDays <= SOON_DAYS ? "soon" :
+      "open";
+
+    return { status, daysLeft: diffDays, policy };
+  }
+
+  // 3) date-only (end of day)
+  if (isDateOnly(raw)){
+    const deadline = new Date(raw + "T23:59:59");
+    const diff = deadline.getTime() - Date.now();
+    const daysLeft = Math.ceil(diff / MS_PER_DAY);
+
+    const status =
+      diff < 0 ? "closed" :
+      daysLeft <= SOON_DAYS ? "soon" :
+      "open";
+
+    return { status, daysLeft, policy: "date_eod_tz" };
+  }
+
+  return { status: "unknown", daysLeft: null, policy: "unknown" };
+}
+
   function renderCard(c){
     const name = c.name || "Untitled";
     const website = c.website_url || "#";
