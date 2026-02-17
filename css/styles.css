@@ -633,9 +633,11 @@ footer{
   display:inline-block;
   border: 1px solid rgba(17,24,39,.18);
   vertical-align: middle;
+  margin-left: 6px;
 }
 
 .status-dot--open{ background: rgba(16,185,129,.9); }
 .status-dot--soon{ background: rgba(245,158,11,.95); }
 .status-dot--closed{ background: rgba(239,68,68,.9); }
-.status-dot--unknown{ background: rgba(107,114,128,.8); }
+.status-dot--unknown{ background: rgba(107,114,128,.8); 
+}
