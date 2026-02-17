@@ -408,31 +408,37 @@ function computeDeadlineForConference(c){
     try { localStorage.setItem("omicentra_view", view); } catch {}
   }
 
-  function sortConferences(){
-    const dir = sortDir === "asc" ? 1 : -1;
+function sortConferences(){
+  const dir = sortDir === "asc" ? 1 : -1;
 
-    conferences.sort((a, b) => {
-      if (sortKey === "name"){
-        const an = String(a.name || "").toLowerCase();
-        const bn = String(b.name || "").toLowerCase();
-        return an.localeCompare(bn) * dir;
-      }
+  conferences.sort((a, b) => {
+    if (sortKey === "name"){
+      const an = String(a.name || "").toLowerCase();
+      const bn = String(b.name || "").toLowerCase();
+      return an.localeCompare(bn) * dir;
+    }
 
-      if (sortKey === "dates"){
-        const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
-        const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
-        return (as - bs) * dir;
-      }
-
-      const ad = daysToDeadline(a.submission_deadline);
-      const bd = daysToDeadline(b.submission_deadline);
-      if (ad !== bd) return (ad - bd) * dir;
-
+    if (sortKey === "dates"){
       const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
       const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
       return (as - bs) * dir;
-    });
-  }
+    }
+
+    const ad = computeDeadlineForConference(a).daysLeft;
+    const bd = computeDeadlineForConference(b).daysLeft;
+
+    const aVal = (ad === null) ? Infinity : ad;
+    const bVal = (bd === null) ? Infinity : bd;
+
+    if (aVal !== bVal) return (aVal - bVal) * dir;
+
+    const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
+    const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
+
+    return (as - bs) * dir;
+  });
+}
+
 
   function updateAriaSort(){
     const none = "none";
