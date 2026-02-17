@@ -8,7 +8,6 @@
   const SOON_DAYS = 7;
   const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-  // --- helpers: safe DOM access ---
   function $(id){ return document.getElementById(id); }
 
   function requireEl(id){
@@ -61,17 +60,8 @@
   let sortKey = "deadline";
   let sortDir = "asc";
 
-  // (2) deadline sort mode: cards/status default, table can switch to strict when header clicked
+  // deadline sort mode: cards/status default, table can switch to strict when header clicked
   let deadlineSortMode = "status"; // "status" | "strict"
-
-  function escapeHtml(s){
-    return String(s)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#39;");
-  }
 
   function debounce(fn, delay){
     let t = null;
@@ -102,8 +92,6 @@
   }
 
   function parseDeadlineStrictMs(c){
-    // strict = sort by the actual submission_deadline moment if datetime,
-    // or by date-only midnight for ordering (we are not computing "end of day" here)
     if (!c.submission_deadline) return Infinity;
     const raw = c.submission_deadline;
     const t = Date.parse(raw.includes("T") ? raw : (raw + "T00:00:00"));
@@ -222,18 +210,10 @@
     return loc;
   }
 
-  function conferenceDateRange(c){
-    return formatDateRange(c.start_date, c.end_date);
-  }
-
-  function conferenceDeadline(c){
-    return c.submission_deadline ? formatDate(c.submission_deadline) : "—";
-  }
-
-  // (5) if no deadline but future event => status "tba"
   function computeDeadlineForConference(c){
     const raw = c.submission_deadline;
 
+    // if no deadline but future event => status "tba"
     if (!raw){
       const start = (c.start_date ? Date.parse(c.start_date + "T00:00:00") : null);
       const future = start !== null && !Number.isNaN(start) && start > Date.now();
@@ -298,56 +278,37 @@
     return { status: "unknown", daysLeft: null, policy: "unknown" };
   }
 
+  function statusLabelFor(status){
+    if (status === "open") return "Open";
+    if (status === "soon") return "Closing soon";
+    if (status === "closed") return "Closed";
+    if (status === "tba") return "TBA";
+    return "Unknown";
+  }
+
+  function dotClassFor(status){
+    if (status === "open") return "status-dot--open";
+    if (status === "soon") return "status-dot--soon";
+    if (status === "closed") return "status-dot--closed";
+    return "status-dot--unknown";
+  }
+
+  function createChipSpan(cls, text){
+    const span = document.createElement("span");
+    span.className = cls;
+    span.textContent = text;
+    return span;
+  }
+
   function renderCard(c){
     const name = c.name || "Untitled";
     const website = c.website_url || "#";
     const format = normalizeFormat(c.format);
     const deadlineInfo = c._dl || computeDeadlineForConference(c);
 
-    const chips = [];
-    chips.push({ text: shortLocation(c), cls: "chip" });
-    chips.push({ text: conferenceDateRange(c), cls: "chip" });
-
-    // show deadline chip only if we have a deadline date
-    if (c.submission_deadline){
-      const statusLabel =
-        deadlineInfo.status === "open" ? "Open" :
-        deadlineInfo.status === "soon" ? "Closing soon" :
-        deadlineInfo.status === "closed" ? "Closed" :
-        deadlineInfo.status === "tba" ? "TBA" :
-        "—";
-
-     const statusLabel =
-        deadlineInfo.status === "open" ? "Open" :
-        deadlineInfo.status === "soon" ? "Closing soon" :
-        deadlineInfo.status === "closed" ? "Closed" :
-        deadlineInfo.status === "tba" ? "TBA" :
-        "Unknown";
-
-      const dotClass =
-        deadlineInfo.status === "open" ? "status-dot--open" :
-        deadlineInfo.status === "soon" ? "status-dot--soon" :
-        deadlineInfo.status === "closed" ? "status-dot--closed" :
-        "status-dot--unknown";
-
-      const text = `Deadline: ${formatDate(c.submission_deadline)}`;
-
-      chips.push({
-            text: `${text} <span class="status-dot ${dotClass}" title="${statusLabel}" aria-label="${statusLabel}"></span>`,
-            cls: "chip chip--deadline"
-      });
-    }
-
-    const chipHtml = chips
-      .filter(x => x.text && x.text !== "TBA")
-      .map(x => `<span class="${x.cls}">${x.text}</span>`)
-      .join("");
-
     const article = document.createElement("article");
     article.className = "card";
-
-    const isOnsite = (format === "onsite");
-    article.classList.add(isOnsite ? "card--onsite" : "card--remote");
+    article.classList.add(format === "onsite" ? "card--onsite" : "card--remote");
 
     article.dataset.title = String(name).toLowerCase();
     article.dataset.region = toKey(normalizeRegion(c.region));
@@ -355,14 +316,45 @@
     article.dataset.topic = topicList(c).map(t => toKey(t)).join("|");
     article.dataset.deadline = c.submission_deadline ? String(c.submission_deadline) : "";
 
-    article.innerHTML = `
-      <h2>${escapeHtml(name)}</h2>
-      <div class="meta">${chipHtml}</div>
-      <a class="cta cta--small" href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer"
-         aria-label="Open conference website: ${escapeHtml(name)}">
-        Website
-      </a>
-    `;
+    const h2 = document.createElement("h2");
+    h2.textContent = name;
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+
+    meta.appendChild(createChipSpan("chip", shortLocation(c)));
+    meta.appendChild(createChipSpan("chip", formatDateRange(c.start_date, c.end_date)));
+
+    if (c.submission_deadline){
+      const chip = document.createElement("span");
+      chip.className = "chip chip--deadline";
+
+      const label = statusLabelFor(deadlineInfo.status);
+      const dotClass = dotClassFor(deadlineInfo.status);
+
+      chip.appendChild(document.createTextNode(`Deadline: ${formatDate(c.submission_deadline)} `));
+
+      const dot = document.createElement("span");
+      dot.className = `status-dot ${dotClass}`;
+      dot.setAttribute("title", label);
+      dot.setAttribute("aria-label", label);
+
+      chip.appendChild(dot);
+      meta.appendChild(chip);
+    }
+
+    const a = document.createElement("a");
+    a.className = "cta cta--small";
+    a.href = website;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.setAttribute("aria-label", `Open conference website: ${name}`);
+    a.textContent = "Website";
+
+    article.appendChild(h2);
+    article.appendChild(meta);
+    article.appendChild(a);
+
     return article;
   }
 
@@ -382,12 +374,12 @@
 
     tr.innerHTML = `
       <td class="tname">${escapeHtml(name)}</td>
-      <td>${escapeHtml(conferenceDateRange(c))}</td>
+      <td>${escapeHtml(formatDateRange(c.start_date, c.end_date))}</td>
       <td>${escapeHtml(shortLocation(c))}</td>
       <td>${escapeHtml(region)}</td>
       <td>${escapeHtml(format)}</td>
       <td>${escapeHtml(topics.join(", ") || "—")}</td>
-      <td>${escapeHtml(conferenceDeadline(c))}</td>
+      <td>${escapeHtml(c.submission_deadline ? formatDate(c.submission_deadline) : "—")}</td>
       <td class="tlink">
         <a href="${escapeHtml(website)}" target="_blank" rel="noopener noreferrer"
            aria-label="Open conference website: ${escapeHtml(name)}">
@@ -461,13 +453,12 @@
   function sortConferences(){
     const dir = sortDir === "asc" ? 1 : -1;
 
-    // (1) status rank is NOT reversed by sortDir
     function statusRank(status){
       if (status === "soon") return 0;
       if (status === "open") return 1;
       if (status === "tba") return 2;
       if (status === "closed") return 3;
-      return 4; // unknown/no deadline/invalid
+      return 4;
     }
 
     conferences.sort((a, b) => {
@@ -481,27 +472,24 @@
         return (parseStartMs(a) - parseStartMs(b)) * dir;
       }
 
-      // deadline strict for table header clicks
+      // strict deadline sort when clicking header in table
       if (sortKey === "deadline" && deadlineSortMode === "strict" && currentView === "table"){
         const ad = parseDeadlineStrictMs(a);
         const bd = parseDeadlineStrictMs(b);
         if (ad !== bd) return (ad - bd) * dir;
-
-        // fallback: start date
         return (parseStartMs(a) - parseStartMs(b)) * dir;
       }
 
-      // default: status -> year -> days -> start_date
       const aInfo = a._dl || computeDeadlineForConference(a);
       const bInfo = b._dl || computeDeadlineForConference(b);
 
       const ar = statusRank(aInfo.status);
       const br = statusRank(bInfo.status);
-      if (ar !== br) return (ar - br); // no *dir
+      if (ar !== br) return (ar - br); // not reversed
 
       const ay = (a._year ?? Infinity);
       const by = (b._year ?? Infinity);
-      if (ay !== by) return (ay - by); // no *dir
+      if (ay !== by) return (ay - by); // not reversed
 
       const aDays = (aInfo.daysLeft === null) ? Infinity : aInfo.daysLeft;
       const bDays = (bInfo.daysLeft === null) ? Infinity : bInfo.daysLeft;
@@ -540,7 +528,6 @@
       sortDir = "asc";
     }
 
-    // (2) deadline strict only when clicking header in table
     if (key === "deadline" && source === "header" && currentView === "table"){
       deadlineSortMode = "strict";
     } else if (key !== "deadline") {
@@ -572,7 +559,7 @@
 
     conferences = data.filter(c => !isPastOrOngoing(c));
 
-    // (4) precompute meta for sorting
+    // precompute meta for sorting
     for (const c of conferences){
       c._year =
         (c.start_date && /^\d{4}/.test(c.start_date)) ? Number(c.start_date.slice(0,4)) :
