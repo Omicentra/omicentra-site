@@ -1,34 +1,66 @@
 // /js/conferences.js
 (() => {
+  "use strict";
+
   const DATA_URL = "/data/conferences.json";
   const SEARCH_DEBOUNCE_MS = 200;
 
   const SOON_DAYS = 7;
   const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-  const q = document.getElementById("q");
-  const regionSel = document.getElementById("region");
-  const topicSel = document.getElementById("topic");
-  const formatSel = document.getElementById("format");
-  const deadlineSel = document.getElementById("deadline");
-  const resetBtn = document.getElementById("reset");
+  // --- helpers: safe DOM access ---
+  function $(id){
+    return document.getElementById(id);
+  }
 
-  const viewCardsBtn = document.getElementById("viewCards");
-  const viewTableBtn = document.getElementById("viewTable");
+  function requireEl(id){
+    const el = $(id);
+    if (!el) throw new Error(`Missing element #${id} (check conferences.html ids)`);
+    return el;
+  }
 
-  const grid = document.getElementById("grid");
-  const tableWrap = document.getElementById("tablewrap");
-  const tbody = document.getElementById("tbody");
-  const statusEl = document.getElementById("status");
+  function setStatus(msg){
+    const el = $("status");
+    if (el) el.textContent = msg;
+  }
 
-  const thName = document.getElementById("th-name");
-  const thDates = document.getElementById("th-dates");
-  const thDeadline = document.getElementById("th-deadline");
+  // If the page isn't conferences.html (or DOM isn't ready), do nothing.
+  // (with defer it should be ready, but this prevents silent crashes on other pages)
+  if (!$("grid") || !$("tbody")) return;
+
+  let q, regionSel, topicSel, formatSel, deadlineSel, resetBtn;
+  let viewCardsBtn, viewTableBtn;
+  let grid, tableWrap, tbody, statusEl;
+  let thName, thDates, thDeadline;
+
+  try {
+    q = requireEl("q");
+    regionSel = requireEl("region");
+    topicSel = requireEl("topic");
+    formatSel = requireEl("format");
+    deadlineSel = requireEl("deadline");
+    resetBtn = requireEl("reset");
+
+    viewCardsBtn = requireEl("viewCards");
+    viewTableBtn = requireEl("viewTable");
+
+    grid = requireEl("grid");
+    tableWrap = requireEl("tablewrap");
+    tbody = requireEl("tbody");
+    statusEl = requireEl("status");
+
+    thName = requireEl("th-name");
+    thDates = requireEl("th-dates");
+    thDeadline = requireEl("th-deadline");
+  } catch (e) {
+    console.error(e);
+    setStatus(String(e.message || e));
+    return;
+  }
 
   let conferences = [];
   let currentView = "cards"; // "cards" | "table"
 
-  // Default: shortest time to deadline (days left), ascending
   let sortKey = "deadline";
   let sortDir = "asc";
 
@@ -60,12 +92,10 @@
 
   function parseIsoMidnight(iso){
     if (!iso) return null;
-    // start/end filtering – ok for v1 (local midnight)
-    const t = Date.parse(iso + "T00:00:00");
+    const t = Date.parse(iso + "T00:00:00"); // local midnight ok for start/end filtering
     return Number.isNaN(t) ? null : t;
   }
 
-  // Filter out past or ongoing conferences (based on dates)
   function isPastOrOngoing(c){
     const today = todayMidnight();
     const start = parseIsoMidnight(c.start_date);
@@ -186,7 +216,6 @@
     return c.submission_deadline ? formatDate(c.submission_deadline) : "—";
   }
 
-  // Deadline policy computation (minimal, v1)
   function computeDeadlineForConference(c){
     const raw = c.submission_deadline;
     if (!raw) return { status: "unknown", daysLeft: null, policy: "none" };
@@ -195,7 +224,6 @@
       c.deadline_policy ||
       (raw.includes("T") ? "datetime_fixed" : isDateOnly(raw) ? "date_eod_tz" : "unknown");
 
-    // 1) Exact timestamp with offset/Z
     if (policy === "datetime_fixed"){
       const d = new Date(raw);
       if (Number.isNaN(d.getTime())) return { status: "unknown", daysLeft: null, policy };
@@ -210,7 +238,6 @@
       return { status, daysLeft, policy };
     }
 
-    // 2) AoE (Anywhere on Earth) for date-only
     if (policy === "aoe" && isDateOnly(raw)){
       const tz = "Etc/GMT+12"; // UTC-12
       const today = new Date();
@@ -235,7 +262,6 @@
       return { status, daysLeft: diffDays, policy };
     }
 
-    // 3) date-only interpreted as end-of-day (v1 fallback)
     if (isDateOnly(raw)){
       const deadline = new Date(raw + "T23:59:59");
       const diffMs = deadline.getTime() - Date.now();
@@ -389,62 +415,59 @@
     try { localStorage.setItem("omicentra_view", view); } catch {}
   }
 
- function sortConferences(){
-  const dir = sortDir === "asc" ? 1 : -1;
+  // ✅ FIXED: sort must be inside conferences.sort((a,b)=>...)
+  function sortConferences(){
+    const dir = sortDir === "asc" ? 1 : -1;
 
-  function statusRank(info){
-    if (info.status === "soon") return 0;
-    if (info.status === "open") return 1;
-    if (info.status === "closed") return 2;
-    return 3; // unknown / no deadline
-  }
-
-  function confYear(c){
-    const y =
-      (c.start_date && /^\d{4}/.test(c.start_date)) ? Number(c.start_date.slice(0,4)) :
-      (c.end_date && /^\d{4}/.test(c.end_date)) ? Number(c.end_date.slice(0,4)) :
-      Infinity;
-    return Number.isFinite(y) ? y : Infinity;
-  }
-
-  conferences.sort((a, b) => {
-    if (sortKey === "name"){
-      const an = String(a.name || "").toLowerCase();
-      const bn = String(b.name || "").toLowerCase();
-      return an.localeCompare(bn) * dir;
+    function statusRank(info){
+      if (info.status === "soon") return 0;
+      if (info.status === "open") return 1;
+      if (info.status === "closed") return 2;
+      return 3;
     }
 
-    if (sortKey === "dates"){
+    function confYear(c){
+      const y =
+        (c.start_date && /^\d{4}/.test(c.start_date)) ? Number(c.start_date.slice(0,4)) :
+        (c.end_date && /^\d{4}/.test(c.end_date)) ? Number(c.end_date.slice(0,4)) :
+        Infinity;
+      return Number.isFinite(y) ? y : Infinity;
+    }
+
+    conferences.sort((a, b) => {
+      if (sortKey === "name"){
+        const an = String(a.name || "").toLowerCase();
+        const bn = String(b.name || "").toLowerCase();
+        return an.localeCompare(bn) * dir;
+      }
+
+      if (sortKey === "dates"){
+        const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
+        const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
+        return (as - bs) * dir;
+      }
+
+      // default: deadline
+      const aInfo = computeDeadlineForConference(a);
+      const bInfo = computeDeadlineForConference(b);
+
+      const aRank = statusRank(aInfo);
+      const bRank = statusRank(bInfo);
+      if (aRank !== bRank) return (aRank - bRank) * dir;
+
+      const ay = confYear(a);
+      const by = confYear(b);
+      if (ay !== by) return (ay - by) * dir;
+
+      const aDays = (aInfo.daysLeft === null) ? Infinity : aInfo.daysLeft;
+      const bDays = (bInfo.daysLeft === null) ? Infinity : bInfo.daysLeft;
+      if (aDays !== bDays) return (aDays - bDays) * dir;
+
       const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
       const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
       return (as - bs) * dir;
-    }
-
-    const aInfo = computeDeadlineForConference(a);
-    const bInfo = computeDeadlineForConference(b);
-
-    // 1) status first
-    const aRank = statusRank(aInfo);
-    const bRank = statusRank(bInfo);
-    if (aRank !== bRank) return (aRank - bRank) * dir;
-
-    // 2) then year
-    const ay = confYear(a);
-    const by = confYear(b);
-    if (ay !== by) return (ay - by) * dir;
-
-    // 3) then days
-    const aDays = (aInfo.daysLeft === null) ? Infinity : aInfo.daysLeft;
-    const bDays = (bInfo.daysLeft === null) ? Infinity : bInfo.daysLeft;
-    if (aDays !== bDays) return (aDays - bDays) * dir;
-
-    // 4) tie-breaker
-    const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
-    const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
-    return (as - bs) * dir;
-  });
-}
-
+    });
+  }
 
   function updateAriaSort(){
     const none = "none";
@@ -549,7 +572,7 @@
 
   loadData().catch(err => {
     console.error(err);
-    statusEl.textContent = "Failed to load conferences.";
+    statusEl.textContent = `Failed to load conferences: ${err.message || err}`;
     grid.innerHTML = "";
     tbody.innerHTML = "";
   });
