@@ -62,8 +62,11 @@
   let sortKey = "deadline";
   let sortDir = "asc";
 
-  // cards/status default, table can switch to strict when header clicked
+  // table can switch to strict when header clicked
   let deadlineSortMode = "status"; // "status" | "strict"
+
+  // Year activity map (for the December edge case)
+  let yearHasActive = new Map(); // year -> boolean
 
   // ---------- Utility ----------
   function debounce(fn, delay){
@@ -85,7 +88,7 @@
 
   function parseIsoMidnight(iso){
     if (!iso) return null;
-    const t = Date.parse(iso + "T00:00:00"); // local midnight ok for v1 start/end filtering
+    const t = Date.parse(iso + "T00:00:00");
     return Number.isNaN(t) ? null : t;
   }
 
@@ -223,7 +226,6 @@
   function computeDeadlineForConference(c){
     const raw = c.submission_deadline;
 
-    // no deadline but future event => status "tba"
     if (!raw){
       const start = (c.start_date ? Date.parse(c.start_date + "T00:00:00") : null);
       const future = start !== null && !Number.isNaN(start) && start > Date.now();
@@ -251,13 +253,9 @@
     if (policy === "aoe" && isDateOnly(raw)){
       const tz = "Etc/GMT+12"; // UTC-12
       const today = new Date();
-
       const todayInAoE = new Date(
         new Intl.DateTimeFormat("en-CA", {
-          timeZone: tz,
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit"
+          timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit"
         }).format(today)
       );
 
@@ -303,7 +301,7 @@
     return "status-dot--unknown";
   }
 
-  // ---------- Rendering (DOM-only; no innerHTML from data) ----------
+  // ---------- Rendering ----------
   function makeEl(tag, className){
     const el = document.createElement(tag);
     if (className) el.className = className;
@@ -470,13 +468,18 @@
   function sortConferences(){
     const dir = sortDir === "asc" ? 1 : -1;
 
+    // Within a year:
+    // soon -> open -> tba -> closed -> unknown
     function statusRank(status){
       if (status === "soon") return 0;
       if (status === "open") return 1;
       if (status === "tba") return 2;
       if (status === "closed") return 3;
-      return 4; // unknown / no deadline / invalid
+      return 4;
     }
+
+    const currentYear = new Date().getFullYear();
+    const nextYear = currentYear + 1;
 
     conferences.sort((a, b) => {
       if (sortKey === "name"){
@@ -496,16 +499,34 @@
         return (parseStartMs(a) - parseStartMs(b)) * dir;
       }
 
+      const ay = (a._year ?? Infinity);
+      const by = (b._year ?? Infinity);
+
+      // Special rule ONLY for Dec edge case:
+      // if currentYear has no active conferences, and nextYear has active ones,
+      // show nextYear before currentYear.
+      if (ay !== by){
+        if (
+          ay === currentYear && by === nextYear &&
+          !yearHasActive.get(currentYear) && yearHasActive.get(nextYear)
+        ) return 1; // push currentYear below nextYear
+
+        if (
+          ay === nextYear && by === currentYear &&
+          !yearHasActive.get(currentYear) && yearHasActive.get(nextYear)
+        ) return -1; // pull nextYear above currentYear
+
+        // Normal: year first
+        return (ay - by);
+      }
+
+      // Same year: status -> days -> start_date
       const aInfo = a._dl || computeDeadlineForConference(a);
       const bInfo = b._dl || computeDeadlineForConference(b);
 
       const ar = statusRank(aInfo.status);
       const br = statusRank(bInfo.status);
-      if (ar !== br) return (ar - br); // NOT reversed
-
-      const ay = (a._year ?? Infinity);
-      const by = (b._year ?? Infinity);
-      if (ay !== by) return (ay - by); // NOT reversed
+      if (ar !== br) return (ar - br);
 
       const aDays = (aInfo.daysLeft === null) ? Infinity : aInfo.daysLeft;
       const bDays = (bInfo.daysLeft === null) ? Infinity : bInfo.daysLeft;
@@ -579,6 +600,8 @@
     conferences = data.filter(c => !isPastOrOngoing(c));
 
     // precompute meta for sorting
+    yearHasActive = new Map();
+
     for (const c of conferences){
       c._year =
         (c.start_date && /^\d{4}/.test(c.start_date)) ? Number(c.start_date.slice(0,4)) :
@@ -586,6 +609,14 @@
         Infinity;
 
       c._dl = computeDeadlineForConference(c);
+
+      // "active" = soon/open/tba (closed and unknown are not)
+      const y = c._year;
+      const st = c._dl.status;
+      const isActive = (st === "soon" || st === "open" || st === "tba");
+
+      if (!yearHasActive.has(y)) yearHasActive.set(y, false);
+      if (isActive) yearHasActive.set(y, true);
     }
 
     const regions = uniqSorted(conferences.map(c => normalizeRegion(c.region)).filter(Boolean));
