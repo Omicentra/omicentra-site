@@ -1,8 +1,10 @@
 // /js/conferences.js
 (() => {
   const DATA_URL = "/data/conferences.json";
-  const URGENT_DAYS = 30;
   const SEARCH_DEBOUNCE_MS = 200;
+
+  const SOON_DAYS = 7;
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
   const q = document.getElementById("q");
   const regionSel = document.getElementById("region");
@@ -47,6 +49,10 @@
     };
   }
 
+  function isDateOnly(s){
+    return typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+  }
+
   function todayMidnight(){
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
@@ -54,7 +60,7 @@
 
   function parseIsoMidnight(iso){
     if (!iso) return null;
-    // Date-only used as "local midnight" for start/end filtering – ok for v1
+    // start/end filtering – ok for v1 (local midnight)
     const t = Date.parse(iso + "T00:00:00");
     return Number.isNaN(t) ? null : t;
   }
@@ -180,100 +186,77 @@
     return c.submission_deadline ? formatDate(c.submission_deadline) : "—";
   }
 
-  // Sorting by "time to deadline" (days left). Past/none -> Infinity (placeholder for v1)
-  function daysToDeadline(iso){
-    if (!iso) return Infinity;
-    const t = parseIsoMidnight(iso);
-    if (t === null) return Infinity;
-    const diffDays = Math.floor((t - todayMidnight()) / (24*60*60*1000));
-    return diffDays < 0 ? Infinity : diffDays;
+  // Deadline policy computation (minimal, v1)
+  function computeDeadlineForConference(c){
+    const raw = c.submission_deadline;
+    if (!raw) return { status: "unknown", daysLeft: null, policy: "none" };
+
+    const policy =
+      c.deadline_policy ||
+      (raw.includes("T") ? "datetime_fixed" : isDateOnly(raw) ? "date_eod_tz" : "unknown");
+
+    // 1) Exact timestamp with offset/Z
+    if (policy === "datetime_fixed"){
+      const d = new Date(raw);
+      if (Number.isNaN(d.getTime())) return { status: "unknown", daysLeft: null, policy };
+
+      const diffMs = d.getTime() - Date.now();
+      const daysLeft = Math.ceil(diffMs / MS_PER_DAY);
+      const status =
+        diffMs < 0 ? "closed" :
+        daysLeft <= SOON_DAYS ? "soon" :
+        "open";
+
+      return { status, daysLeft, policy };
+    }
+
+    // 2) AoE (Anywhere on Earth) for date-only
+    if (policy === "aoe" && isDateOnly(raw)){
+      const tz = "Etc/GMT+12"; // UTC-12
+      const today = new Date();
+
+      const todayInAoE = new Date(
+        new Intl.DateTimeFormat("en-CA", {
+          timeZone: tz,
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit"
+        }).format(today)
+      );
+
+      const deadline = new Date(raw + "T00:00:00");
+      const diffDays = Math.floor((deadline - todayInAoE) / MS_PER_DAY);
+
+      const status =
+        diffDays < 0 ? "closed" :
+        diffDays <= SOON_DAYS ? "soon" :
+        "open";
+
+      return { status, daysLeft: diffDays, policy };
+    }
+
+    // 3) date-only interpreted as end-of-day (v1 fallback)
+    if (isDateOnly(raw)){
+      const deadline = new Date(raw + "T23:59:59");
+      const diffMs = deadline.getTime() - Date.now();
+      const daysLeft = Math.ceil(diffMs / MS_PER_DAY);
+
+      const status =
+        diffMs < 0 ? "closed" :
+        daysLeft <= SOON_DAYS ? "soon" :
+        "open";
+
+      return { status, daysLeft, policy: "date_eod_tz" };
+    }
+
+    return { status: "unknown", daysLeft: null, policy: "unknown" };
   }
-
-  function deadlineUrgency(iso){
-    const d = daysToDeadline(iso);
-    const isUrgent = Number.isFinite(d) && d <= URGENT_DAYS;
-    return { isUrgent, days: Number.isFinite(d) ? d : null };
-  }
-
-const SOON_DAYS = 7;
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-function isDateOnly(s){
-  return typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
-}
-
-function computeDeadlineForConference(c){
-  const raw = c.submission_deadline;
-  if (!raw) return { status: "unknown", daysLeft: null, policy: "none" };
-
-  const policy =
-    c.deadline_policy ||
-    (raw.includes("T") ? "datetime_fixed" : isDateOnly(raw) ? "date_eod_tz" : "unknown");
-
-  // 1) dokładny timestamp (z offsetem)
-  if (policy === "datetime_fixed"){
-    const d = new Date(raw);
-    if (Number.isNaN(d.getTime())) return { status: "unknown", daysLeft: null, policy };
-
-    const diff = d.getTime() - Date.now();
-    const daysLeft = Math.ceil(diff / MS_PER_DAY);
-    const status =
-      diff < 0 ? "closed" :
-      daysLeft <= SOON_DAYS ? "soon" :
-      "open";
-
-    return { status, daysLeft, policy };
-  }
-
-  // 2) AoE
-  if (policy === "aoe" && isDateOnly(raw)){
-    const tz = "Etc/GMT+12"; // UTC-12
-    const today = new Date();
-    const todayInAoE = new Date(
-      new Intl.DateTimeFormat("en-CA", {
-        timeZone: tz,
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
-      }).format(today)
-    );
-
-    const deadline = new Date(raw + "T00:00:00");
-    const diffDays = Math.floor((deadline - todayInAoE) / MS_PER_DAY);
-
-    const status =
-      diffDays < 0 ? "closed" :
-      diffDays <= SOON_DAYS ? "soon" :
-      "open";
-
-    return { status, daysLeft: diffDays, policy };
-  }
-
-  // 3) date-only (end of day)
-  if (isDateOnly(raw)){
-    const deadline = new Date(raw + "T23:59:59");
-    const diff = deadline.getTime() - Date.now();
-    const daysLeft = Math.ceil(diff / MS_PER_DAY);
-
-    const status =
-      diff < 0 ? "closed" :
-      daysLeft <= SOON_DAYS ? "soon" :
-      "open";
-
-    return { status, daysLeft, policy: "date_eod_tz" };
-  }
-
-  return { status: "unknown", daysLeft: null, policy: "unknown" };
-}
 
   function renderCard(c){
     const name = c.name || "Untitled";
     const website = c.website_url || "#";
     const format = normalizeFormat(c.format);
     const deadlineInfo = computeDeadlineForConference(c);
-
-
-    const { isUrgent } = deadlineUrgency(c.submission_deadline);
 
     const chips = [];
     chips.push({ text: shortLocation(c), cls: "chip" });
@@ -294,7 +277,6 @@ function computeDeadlineForConference(c){
       });
     }
 
-
     const chipHtml = chips
       .filter(x => x.text && x.text !== "TBA")
       .map(x => `<span class="${x.cls}">${escapeHtml(x.text)}</span>`)
@@ -305,7 +287,6 @@ function computeDeadlineForConference(c){
 
     const isOnsite = (format === "onsite");
     article.classList.add(isOnsite ? "card--onsite" : "card--remote");
-    if (isUrgent) article.classList.add("card--urgent");
 
     article.dataset.title = String(name).toLowerCase();
     article.dataset.region = toKey(normalizeRegion(c.region));
@@ -408,37 +389,36 @@ function computeDeadlineForConference(c){
     try { localStorage.setItem("omicentra_view", view); } catch {}
   }
 
-function sortConferences(){
-  const dir = sortDir === "asc" ? 1 : -1;
+  function sortConferences(){
+    const dir = sortDir === "asc" ? 1 : -1;
 
-  conferences.sort((a, b) => {
-    if (sortKey === "name"){
-      const an = String(a.name || "").toLowerCase();
-      const bn = String(b.name || "").toLowerCase();
-      return an.localeCompare(bn) * dir;
-    }
+    conferences.sort((a, b) => {
+      if (sortKey === "name"){
+        const an = String(a.name || "").toLowerCase();
+        const bn = String(b.name || "").toLowerCase();
+        return an.localeCompare(bn) * dir;
+      }
 
-    if (sortKey === "dates"){
+      if (sortKey === "dates"){
+        const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
+        const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
+        return (as - bs) * dir;
+      }
+
+      const ad = computeDeadlineForConference(a).daysLeft;
+      const bd = computeDeadlineForConference(b).daysLeft;
+
+      const aVal = (ad === null) ? Infinity : ad;
+      const bVal = (bd === null) ? Infinity : bd;
+
+      if (aVal !== bVal) return (aVal - bVal) * dir;
+
       const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
       const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
+
       return (as - bs) * dir;
-    }
-
-    const ad = computeDeadlineForConference(a).daysLeft;
-    const bd = computeDeadlineForConference(b).daysLeft;
-
-    const aVal = (ad === null) ? Infinity : ad;
-    const bVal = (bd === null) ? Infinity : bd;
-
-    if (aVal !== bVal) return (aVal - bVal) * dir;
-
-    const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
-    const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
-
-    return (as - bs) * dir;
-  });
-}
-
+    });
+  }
 
   function updateAriaSort(){
     const none = "none";
@@ -492,12 +472,6 @@ function sortConferences(){
     if (!Array.isArray(data)) throw new Error("Invalid JSON: expected an array");
 
     conferences = data.filter(c => !isPastOrOngoing(c));
-
-    if (conferences.length > 0) {
-      console.log("Deadline test for first item:");
-      console.log(computeDeadlineForConference(conferences[0]));
-    }
-
 
     const regions = uniqSorted(conferences.map(c => normalizeRegion(c.region)).filter(Boolean));
     const formats = uniqSorted(conferences.map(c => normalizeFormat(c.format)).filter(Boolean));
