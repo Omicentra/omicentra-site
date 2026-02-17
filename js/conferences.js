@@ -390,44 +390,55 @@
   }
 
   function sortConferences(){
-    const aInfo = computeDeadlineForConference(a);
-    const bInfo = computeDeadlineForConference(b);
+  const dir = sortDir === "asc" ? 1 : -1;
 
-    function statusRank(info){
-      if (info.status === "soon") return 0;
-      if (info.status === "open") return 1;
-      if (info.status === "closed") return 2;
-      return 3; // unknown / no deadline
-    }
+  function statusRank(info){
+    if (info.status === "soon") return 0;
+    if (info.status === "open") return 1;
+    if (info.status === "closed") return 2;
+    return 3; // unknown / no deadline
+  }
 
-    function confYear(c){
-      const y =
+  function confYear(c){
+    const y =
       (c.start_date && /^\d{4}/.test(c.start_date)) ? Number(c.start_date.slice(0,4)) :
       (c.end_date && /^\d{4}/.test(c.end_date)) ? Number(c.end_date.slice(0,4)) :
       Infinity;
-      return Number.isFinite(y) ? y : Infinity;
+    return Number.isFinite(y) ? y : Infinity;
+  }
+
+  conferences.sort((a, b) => {
+    if (sortKey === "name"){
+      const an = String(a.name || "").toLowerCase();
+      const bn = String(b.name || "").toLowerCase();
+      return an.localeCompare(bn) * dir;
     }
 
-  // 1) status first (fixes end-of-year "closed wall")
+    if (sortKey === "dates"){
+      const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
+      const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
+      return (as - bs) * dir;
+    }
+
+    // deadline sort: status -> year -> days -> start_date
+    const aInfo = computeDeadlineForConference(a);
+    const bInfo = computeDeadlineForConference(b);
+
     const aRank = statusRank(aInfo);
     const bRank = statusRank(bInfo);
-  if (aRank !== bRank) return (aRank - bRank) * dir;
+    if (aRank !== bRank) return (aRank - bRank) * dir;
 
-  // 2) then year (keeps years grouped)
     const ay = confYear(a);
     const by = confYear(b);
-  if (ay !== by) return (ay - by) * dir;
+    if (ay !== by) return (ay - by) * dir;
 
-  // 3) then days within same status+year
     const aDays = (aInfo.daysLeft === null) ? Infinity : aInfo.daysLeft;
     const bDays = (bInfo.daysLeft === null) ? Infinity : bInfo.daysLeft;
-  if (aDays !== bDays) return (aDays - bDays) * dir;
+    if (aDays !== bDays) return (aDays - bDays) * dir;
 
-  // 4) tie-breaker start_date
     const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
     const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
-  return (as - bs) * dir;
-
+    return (as - bs) * dir;
   });
 }
 
