@@ -63,6 +63,16 @@
   // deadline sort mode: cards/status default, table can switch to strict when header clicked
   let deadlineSortMode = "status"; // "status" | "strict"
 
+  // --- helpers ---
+  function escapeHtml(s){
+    return String(s)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#39;");
+  }
+
   function debounce(fn, delay){
     let t = null;
     return (...args) => {
@@ -96,6 +106,44 @@
     const raw = c.submission_deadline;
     const t = Date.parse(raw.includes("T") ? raw : (raw + "T00:00:00"));
     return Number.isNaN(t) ? Infinity : t;
+  }
+
+  function normalizeRegion(v){
+    const x = String(v || "").trim();
+    if (!x) return "Unknown";
+    if (x.toLowerCase() === "usa") return "USA";
+    return x;
+  }
+
+  function normalizeFormat(v){
+    const x = String(v || "").trim().toLowerCase();
+    if (!x) return "unknown";
+    return x;
+  }
+
+  function toKey(s){
+    return String(s || "").trim().toLowerCase().replace(/\s+/g, "-");
+  }
+
+  function uniqSorted(arr){
+    return Array.from(new Set(arr)).sort((a,b)=>a.localeCompare(b));
+  }
+
+  function topicList(c){
+    const t = Array.isArray(c.topic) ? c.topic : (c.topic ? [c.topic] : []);
+    return t.map(x => String(x)).filter(Boolean);
+  }
+
+  function buildSelect(selectEl, values){
+    const current = selectEl.value || "all";
+    selectEl.innerHTML = '<option value="all">All</option>';
+    for (const v of values){
+      const opt = document.createElement("option");
+      opt.value = toKey(v);
+      opt.textContent = v;
+      selectEl.appendChild(opt);
+    }
+    if ([...selectEl.options].some(o => o.value === current)) selectEl.value = current;
   }
 
   function isPastOrOngoing(c){
@@ -148,44 +196,6 @@
     return `${formatDate(startIso)} – ${formatDate(endIso)}`;
   }
 
-  function toKey(s){
-    return String(s || "").trim().toLowerCase().replace(/\s+/g, "-");
-  }
-
-  function uniqSorted(arr){
-    return Array.from(new Set(arr)).sort((a,b)=>a.localeCompare(b));
-  }
-
-  function normalizeRegion(v){
-    const x = String(v || "").trim();
-    if (!x) return "Unknown";
-    if (x.toLowerCase() === "usa") return "USA";
-    return x;
-  }
-
-  function normalizeFormat(v){
-    const x = String(v || "").trim().toLowerCase();
-    if (!x) return "unknown";
-    return x;
-  }
-
-  function topicList(c){
-    const t = Array.isArray(c.topic) ? c.topic : (c.topic ? [c.topic] : []);
-    return t.map(x => String(x)).filter(Boolean);
-  }
-
-  function buildSelect(selectEl, values){
-    const current = selectEl.value || "all";
-    selectEl.innerHTML = '<option value="all">All</option>';
-    for (const v of values){
-      const opt = document.createElement("option");
-      opt.value = toKey(v);
-      opt.textContent = v;
-      selectEl.appendChild(opt);
-    }
-    if ([...selectEl.options].some(o => o.value === current)) selectEl.value = current;
-  }
-
   function shortLocation(c){
     const country = String(c.location_country || "").trim();
     let city = String(c.location_city || "").trim();
@@ -210,6 +220,7 @@
     return loc;
   }
 
+  // --- deadline computation ---
   function computeDeadlineForConference(c){
     const raw = c.submission_deadline;
 
@@ -300,6 +311,7 @@
     return span;
   }
 
+  // --- rendering ---
   function renderCard(c){
     const name = c.name || "Untitled";
     const website = c.website_url || "#";
@@ -390,6 +402,7 @@
     return tr;
   }
 
+  // --- filtering & view ---
   function nodesForFiltering(){
     return currentView === "cards"
       ? Array.from(grid.children)
@@ -437,7 +450,6 @@
     grid.hidden = !isCards;
     tableWrap.hidden = isCards;
 
-    // when switching back to cards, restore status mode
     if (view === "cards" && sortKey === "deadline"){
       deadlineSortMode = "status";
       sortConferences();
@@ -450,6 +462,7 @@
     try { localStorage.setItem("omicentra_view", view); } catch {}
   }
 
+  // --- sorting (status/year stable, only days/start obey dir) ---
   function sortConferences(){
     const dir = sortDir === "asc" ? 1 : -1;
 
@@ -472,7 +485,6 @@
         return (parseStartMs(a) - parseStartMs(b)) * dir;
       }
 
-      // strict deadline sort when clicking header in table
       if (sortKey === "deadline" && deadlineSortMode === "strict" && currentView === "table"){
         const ad = parseDeadlineStrictMs(a);
         const bd = parseDeadlineStrictMs(b);
@@ -485,11 +497,11 @@
 
       const ar = statusRank(aInfo.status);
       const br = statusRank(bInfo.status);
-      if (ar !== br) return (ar - br); // not reversed
+      if (ar !== br) return (ar - br); // NOT reversed
 
       const ay = (a._year ?? Infinity);
       const by = (b._year ?? Infinity);
-      if (ay !== by) return (ay - by); // not reversed
+      if (ay !== by) return (ay - by); // NOT reversed
 
       const aDays = (aInfo.daysLeft === null) ? Infinity : aInfo.daysLeft;
       const bDays = (bInfo.daysLeft === null) ? Infinity : bInfo.daysLeft;
