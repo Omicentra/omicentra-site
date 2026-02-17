@@ -474,6 +474,12 @@ function computeDeadlineForConference(c){
 
     conferences = data.filter(c => !isPastOrOngoing(c));
 
+    if (conferences.length > 0) {
+      console.log("Deadline test for first item:");
+      console.log(computeDeadlineForConference(conferences[0]));
+    }
+
+
     const regions = uniqSorted(conferences.map(c => normalizeRegion(c.region)).filter(Boolean));
     const formats = uniqSorted(conferences.map(c => normalizeFormat(c.format)).filter(Boolean));
     const topics = uniqSorted(conferences.flatMap(c => topicList(c)).filter(Boolean));
