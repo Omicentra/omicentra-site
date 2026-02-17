@@ -596,3 +596,38 @@ footer{
   color: inherit;
   text-decoration: underline;
 }
+
+/* deadline status chips */
+.chip--open{
+  border-color: rgba(16,185,129,.45);
+  background: rgba(16,185,129,.10);
+}
+
+.chip--soon{
+  border-color: rgba(245,158,11,.55);
+  background: rgba(245,158,11,.12);
+}
+
+.chip--closed{
+  border-color: rgba(239,68,68,.50);
+  background: rgba(239,68,68,.10);
+  opacity: .9;
+}
+
+/* deadline status chips */
+.chip--open{
+  border-color: rgba(16,185,129,.45);
+  background: rgba(16,185,129,.10);
+}
+
+.chip--soon{
+  border-color: rgba(245,158,11,.55);
+  background: rgba(245,158,11,.12);
+}
+
+.chip--closed{
+  border-color: rgba(239,68,68,.50);
+  background: rgba(239,68,68,.10);
+  opacity: .9;
+}
+
