@@ -317,11 +317,24 @@
         deadlineInfo.status === "tba" ? "TBA" :
         "—";
 
-      const text = `Deadline: ${formatDate(c.submission_deadline)} (${statusLabel})`;
+     const statusLabel =
+        deadlineInfo.status === "open" ? "Open" :
+        deadlineInfo.status === "soon" ? "Closing soon" :
+        deadlineInfo.status === "closed" ? "Closed" :
+        deadlineInfo.status === "tba" ? "TBA" :
+        "Unknown";
+
+      const dotClass =
+        deadlineInfo.status === "open" ? "status-dot--open" :
+        deadlineInfo.status === "soon" ? "status-dot--soon" :
+        deadlineInfo.status === "closed" ? "status-dot--closed" :
+        "status-dot--unknown";
+
+      const text = `Deadline: ${formatDate(c.submission_deadline)}`;
 
       chips.push({
-        text,
-        cls: `chip chip--deadline chip--${deadlineInfo.status}`
+            text: `${text} <span class="status-dot ${dotClass}" title="${statusLabel}" aria-label="${statusLabel}"></span>`,
+            cls: "chip chip--deadline"
       });
     }
 
