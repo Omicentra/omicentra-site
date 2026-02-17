@@ -389,7 +389,7 @@
     try { localStorage.setItem("omicentra_view", view); } catch {}
   }
 
-  function sortConferences(){
+ function sortConferences(){
   const dir = sortDir === "asc" ? 1 : -1;
 
   function statusRank(info){
@@ -420,22 +420,25 @@
       return (as - bs) * dir;
     }
 
-    // deadline sort: status -> year -> days -> start_date
     const aInfo = computeDeadlineForConference(a);
     const bInfo = computeDeadlineForConference(b);
 
+    // 1) status first
     const aRank = statusRank(aInfo);
     const bRank = statusRank(bInfo);
     if (aRank !== bRank) return (aRank - bRank) * dir;
 
+    // 2) then year
     const ay = confYear(a);
     const by = confYear(b);
     if (ay !== by) return (ay - by) * dir;
 
+    // 3) then days
     const aDays = (aInfo.daysLeft === null) ? Infinity : aInfo.daysLeft;
     const bDays = (bInfo.daysLeft === null) ? Infinity : bInfo.daysLeft;
     if (aDays !== bDays) return (aDays - bDays) * dir;
 
+    // 4) tie-breaker
     const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
     const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
     return (as - bs) * dir;
