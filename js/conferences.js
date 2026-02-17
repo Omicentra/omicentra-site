@@ -340,7 +340,7 @@
 
     const chipHtml = chips
       .filter(x => x.text && x.text !== "TBA")
-      .map(x => `<span class="${x.cls}">${escapeHtml(x.text)}</span>`)
+      .map(x => `<span class="${x.cls}">${x.text}</span>`)
       .join("");
 
     const article = document.createElement("article");
