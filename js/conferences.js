@@ -270,6 +270,8 @@ function computeDeadlineForConference(c){
     const name = c.name || "Untitled";
     const website = c.website_url || "#";
     const format = normalizeFormat(c.format);
+    const deadlineInfo = computeDeadlineForConference(c);
+
 
     const { isUrgent } = deadlineUrgency(c.submission_deadline);
 
@@ -278,9 +280,20 @@ function computeDeadlineForConference(c){
     chips.push({ text: conferenceDateRange(c), cls: "chip" });
 
     if (c.submission_deadline){
-      const text = `Deadline: ${formatDate(c.submission_deadline)}`;
-      chips.push({ text, cls: `chip chip--deadline${isUrgent ? " chip--urgent" : ""}` });
+      const statusLabel =
+        deadlineInfo.status === "open" ? "Open" :
+        deadlineInfo.status === "soon" ? "Closing soon" :
+        deadlineInfo.status === "closed" ? "Closed" :
+        "—";
+
+      const text = `Deadline: ${formatDate(c.submission_deadline)} (${statusLabel})`;
+
+      chips.push({
+        text,
+        cls: `chip chip--deadline chip--${deadlineInfo.status}`
+      });
     }
+
 
     const chipHtml = chips
       .filter(x => x.text && x.text !== "TBA")
