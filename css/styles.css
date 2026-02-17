@@ -598,18 +598,30 @@ footer{
 }
 
 /* deadline status chips */
+
+/* Deadline chip base – neutral */
+.chip--deadline{
+  border-color: var(--border);
+  background: rgba(17,24,39,.02);
+}
+
+/* OPEN – subtle green */
 .chip.chip--deadline.chip--open{
-  border-color: rgba(16,185,129,.45);
-  background: rgba(16,185,129,.10);
+  border-color: rgba(16,185,129,.40);
+  background: rgba(16,185,129,.08);
+  color: #065f46;
 }
 
+/* SOON – subtle amber */
 .chip.chip--deadline.chip--soon{
-  border-color: rgba(245,158,11,.55);
-  background: rgba(245,158,11,.12);
+  border-color: rgba(245,158,11,.45);
+  background: rgba(245,158,11,.10);
+  color: #7c2d12;
 }
 
+/* CLOSED – subtle red */
 .chip.chip--deadline.chip--closed{
-  border-color: rgba(239,68,68,.50);
-  background: rgba(239,68,68,.10);
-  opacity: .9;
+  border-color: rgba(239,68,68,.40);
+  background: rgba(239,68,68,.08);
+  color: #7f1d1d;
 }
