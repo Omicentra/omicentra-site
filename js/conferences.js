@@ -9,9 +9,7 @@
   const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
   // --- helpers: safe DOM access ---
-  function $(id){
-    return document.getElementById(id);
-  }
+  function $(id){ return document.getElementById(id); }
 
   function requireEl(id){
     const el = $(id);
@@ -24,8 +22,7 @@
     if (el) el.textContent = msg;
   }
 
-  // If the page isn't conferences.html (or DOM isn't ready), do nothing.
-  // (with defer it should be ready, but this prevents silent crashes on other pages)
+  // Avoid crashing if loaded on a different page
   if (!$("grid") || !$("tbody")) return;
 
   let q, regionSel, topicSel, formatSel, deadlineSel, resetBtn;
@@ -64,6 +61,9 @@
   let sortKey = "deadline";
   let sortDir = "asc";
 
+  // (2) deadline sort mode: cards/status default, table can switch to strict when header clicked
+  let deadlineSortMode = "status"; // "status" | "strict"
+
   function escapeHtml(s){
     return String(s)
       .replaceAll("&","&amp;")
@@ -92,8 +92,22 @@
 
   function parseIsoMidnight(iso){
     if (!iso) return null;
-    const t = Date.parse(iso + "T00:00:00"); // local midnight ok for start/end filtering
+    const t = Date.parse(iso + "T00:00:00"); // local midnight ok for v1 start/end filtering
     return Number.isNaN(t) ? null : t;
+  }
+
+  function parseStartMs(c){
+    const t = c.start_date ? Date.parse(c.start_date + "T00:00:00") : Infinity;
+    return Number.isNaN(t) ? Infinity : t;
+  }
+
+  function parseDeadlineStrictMs(c){
+    // strict = sort by the actual submission_deadline moment if datetime,
+    // or by date-only midnight for ordering (we are not computing "end of day" here)
+    if (!c.submission_deadline) return Infinity;
+    const raw = c.submission_deadline;
+    const t = Date.parse(raw.includes("T") ? raw : (raw + "T00:00:00"));
+    return Number.isNaN(t) ? Infinity : t;
   }
 
   function isPastOrOngoing(c){
@@ -216,9 +230,15 @@
     return c.submission_deadline ? formatDate(c.submission_deadline) : "—";
   }
 
+  // (5) if no deadline but future event => status "tba"
   function computeDeadlineForConference(c){
     const raw = c.submission_deadline;
-    if (!raw) return { status: "unknown", daysLeft: null, policy: "none" };
+
+    if (!raw){
+      const start = (c.start_date ? Date.parse(c.start_date + "T00:00:00") : null);
+      const future = start !== null && !Number.isNaN(start) && start > Date.now();
+      return { status: future ? "tba" : "unknown", daysLeft: null, policy: "none" };
+    }
 
     const policy =
       c.deadline_policy ||
@@ -282,17 +302,19 @@
     const name = c.name || "Untitled";
     const website = c.website_url || "#";
     const format = normalizeFormat(c.format);
-    const deadlineInfo = computeDeadlineForConference(c);
+    const deadlineInfo = c._dl || computeDeadlineForConference(c);
 
     const chips = [];
     chips.push({ text: shortLocation(c), cls: "chip" });
     chips.push({ text: conferenceDateRange(c), cls: "chip" });
 
+    // show deadline chip only if we have a deadline date
     if (c.submission_deadline){
       const statusLabel =
         deadlineInfo.status === "open" ? "Open" :
         deadlineInfo.status === "soon" ? "Closing soon" :
         deadlineInfo.status === "closed" ? "Closed" :
+        deadlineInfo.status === "tba" ? "TBA" :
         "—";
 
       const text = `Deadline: ${formatDate(c.submission_deadline)} (${statusLabel})`;
@@ -410,28 +432,29 @@
     grid.hidden = !isCards;
     tableWrap.hidden = isCards;
 
+    // when switching back to cards, restore status mode
+    if (view === "cards" && sortKey === "deadline"){
+      deadlineSortMode = "status";
+      sortConferences();
+      rerender();
+      return;
+    }
+
     applyFilters();
 
     try { localStorage.setItem("omicentra_view", view); } catch {}
   }
 
-  // ✅ FIXED: sort must be inside conferences.sort((a,b)=>...)
   function sortConferences(){
     const dir = sortDir === "asc" ? 1 : -1;
 
-    function statusRank(info){
-      if (info.status === "soon") return 0;
-      if (info.status === "open") return 1;
-      if (info.status === "closed") return 2;
-      return 3;
-    }
-
-    function confYear(c){
-      const y =
-        (c.start_date && /^\d{4}/.test(c.start_date)) ? Number(c.start_date.slice(0,4)) :
-        (c.end_date && /^\d{4}/.test(c.end_date)) ? Number(c.end_date.slice(0,4)) :
-        Infinity;
-      return Number.isFinite(y) ? y : Infinity;
+    // (1) status rank is NOT reversed by sortDir
+    function statusRank(status){
+      if (status === "soon") return 0;
+      if (status === "open") return 1;
+      if (status === "tba") return 2;
+      if (status === "closed") return 3;
+      return 4; // unknown/no deadline/invalid
     }
 
     conferences.sort((a, b) => {
@@ -442,30 +465,36 @@
       }
 
       if (sortKey === "dates"){
-        const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
-        const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
-        return (as - bs) * dir;
+        return (parseStartMs(a) - parseStartMs(b)) * dir;
       }
 
-      // default: deadline
-      const aInfo = computeDeadlineForConference(a);
-      const bInfo = computeDeadlineForConference(b);
+      // deadline strict for table header clicks
+      if (sortKey === "deadline" && deadlineSortMode === "strict" && currentView === "table"){
+        const ad = parseDeadlineStrictMs(a);
+        const bd = parseDeadlineStrictMs(b);
+        if (ad !== bd) return (ad - bd) * dir;
 
-      const aRank = statusRank(aInfo);
-      const bRank = statusRank(bInfo);
-      if (aRank !== bRank) return (aRank - bRank) * dir;
+        // fallback: start date
+        return (parseStartMs(a) - parseStartMs(b)) * dir;
+      }
 
-      const ay = confYear(a);
-      const by = confYear(b);
-      if (ay !== by) return (ay - by) * dir;
+      // default: status -> year -> days -> start_date
+      const aInfo = a._dl || computeDeadlineForConference(a);
+      const bInfo = b._dl || computeDeadlineForConference(b);
+
+      const ar = statusRank(aInfo.status);
+      const br = statusRank(bInfo.status);
+      if (ar !== br) return (ar - br); // no *dir
+
+      const ay = (a._year ?? Infinity);
+      const by = (b._year ?? Infinity);
+      if (ay !== by) return (ay - by); // no *dir
 
       const aDays = (aInfo.daysLeft === null) ? Infinity : aInfo.daysLeft;
       const bDays = (bInfo.daysLeft === null) ? Infinity : bInfo.daysLeft;
       if (aDays !== bDays) return (aDays - bDays) * dir;
 
-      const as = a.start_date ? Date.parse(a.start_date + "T00:00:00") : Infinity;
-      const bs = b.start_date ? Date.parse(b.start_date + "T00:00:00") : Infinity;
-      return (as - bs) * dir;
+      return (parseStartMs(a) - parseStartMs(b)) * dir;
     });
   }
 
@@ -490,13 +519,21 @@
     applyFilters();
   }
 
-  function setSort(key){
+  function setSort(key, source){
     if (sortKey === key){
       sortDir = (sortDir === "asc") ? "desc" : "asc";
     } else {
       sortKey = key;
       sortDir = "asc";
     }
+
+    // (2) deadline strict only when clicking header in table
+    if (key === "deadline" && source === "header" && currentView === "table"){
+      deadlineSortMode = "strict";
+    } else if (key !== "deadline") {
+      deadlineSortMode = "status";
+    }
+
     sortConferences();
     rerender();
   }
@@ -506,7 +543,7 @@
     for (const b of buttons){
       b.addEventListener("click", () => {
         const key = b.getAttribute("data-sort");
-        if (key === "name" || key === "dates" || key === "deadline") setSort(key);
+        if (key === "name" || key === "dates" || key === "deadline") setSort(key, "header");
       });
     }
   }
@@ -521,6 +558,16 @@
     if (!Array.isArray(data)) throw new Error("Invalid JSON: expected an array");
 
     conferences = data.filter(c => !isPastOrOngoing(c));
+
+    // (4) precompute meta for sorting
+    for (const c of conferences){
+      c._year =
+        (c.start_date && /^\d{4}/.test(c.start_date)) ? Number(c.start_date.slice(0,4)) :
+        (c.end_date && /^\d{4}/.test(c.end_date)) ? Number(c.end_date.slice(0,4)) :
+        Infinity;
+
+      c._dl = computeDeadlineForConference(c);
+    }
 
     const regions = uniqSorted(conferences.map(c => normalizeRegion(c.region)).filter(Boolean));
     const formats = uniqSorted(conferences.map(c => normalizeFormat(c.format)).filter(Boolean));
@@ -539,6 +586,7 @@
 
     sortKey = "deadline";
     sortDir = "asc";
+    deadlineSortMode = "status";
     sortConferences();
     rerender();
 
