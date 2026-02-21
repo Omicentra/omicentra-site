@@ -342,14 +342,18 @@
     chipDates.textContent = formatDateRange(c.start_date, c.end_date);
     meta.appendChild(chipDates);
 
-    if (c.submission_deadline){
+     if (c.submission_deadline){
       const chip = makeEl("span", "chip chip--deadline");
       chip.appendChild(document.createTextNode(`Deadline: ${formatDate(c.submission_deadline)} `));
 
       const label = statusLabelFor(deadlineInfo.status);
+      
       const dot = makeEl("span", `status-dot ${dotClassFor(deadlineInfo.status)}`);
       dot.setAttribute("title", label);
-      dot.setAttribute("aria-label", label);
+      dot.setAttribute("aria-hidden", "true");
+      const sr = makeEl("span", "sr-only");
+      sr.textContent = label;
+      chip.appendChild(sr);
 
       chip.appendChild(dot);
       meta.appendChild(chip);
