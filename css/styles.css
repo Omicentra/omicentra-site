@@ -46,7 +46,17 @@ body{
   box-shadow: 0 0 0 6px var(--focusRing);
 }
 
-:focus{outline:none}
+/* ✅ a11y-safe focus: fallback + focus-visible */
+:focus{
+  outline:2px solid var(--focus);
+  outline-offset:3px;
+  box-shadow: 0 0 0 6px var(--focusRing);
+  border-radius: 12px;
+}
+:focus:not(:focus-visible){
+  outline:none;
+  box-shadow:none;
+}
 :focus-visible{
   outline:2px solid var(--focus);
   outline-offset:3px;
@@ -301,10 +311,25 @@ input[type="search"], select{
   text-transform: none;
 }
 
-/* Deadline chip */
+/* ✅ Deadline chips (single source of truth — no duplicates) */
 .chip--deadline{
-  border-color: rgba(124,58,237,.22);
-  background: rgba(124,58,237,.06);
+  border-color: var(--border);
+  background: rgba(17,24,39,.02);
+}
+.chip.chip--deadline.chip--open{
+  border-color: rgba(16,185,129,.40);
+  background: rgba(16,185,129,.08);
+  color: #065f46;
+}
+.chip.chip--deadline.chip--soon{
+  border-color: rgba(245,158,11,.45);
+  background: rgba(245,158,11,.10);
+  color: #7c2d12;
+}
+.chip.chip--deadline.chip--closed{
+  border-color: rgba(239,68,68,.40);
+  background: rgba(239,68,68,.08);
+  color: #7f1d1d;
 }
 
 /* Urgent deadline chip (PURPLE) */
@@ -465,6 +490,7 @@ footer{
   border-top: 1px solid var(--border);
 }
 
+/* ✅ screen-reader only utility */
 .sr-only{
   position:absolute;
   width:1px;height:1px;
@@ -597,34 +623,6 @@ footer{
   text-decoration: underline;
 }
 
-/* deadline status chips */
-
-/* Deadline chip base – neutral */
-.chip--deadline{
-  border-color: var(--border);
-  background: rgba(17,24,39,.02);
-}
-
-/* OPEN – subtle green */
-.chip.chip--deadline.chip--open{
-  border-color: rgba(16,185,129,.40);
-  background: rgba(16,185,129,.08);
-  color: #065f46;
-}
-
-/* SOON – subtle amber */
-.chip.chip--deadline.chip--soon{
-  border-color: rgba(245,158,11,.45);
-  background: rgba(245,158,11,.10);
-  color: #7c2d12;
-}
-
-/* CLOSED – subtle red */
-.chip.chip--deadline.chip--closed{
-  border-color: rgba(239,68,68,.40);
-  background: rgba(239,68,68,.08);
-  color: #7f1d1d;
-}
 /* Status dot */
 .status-dot{
   width:10px;
@@ -639,5 +637,4 @@ footer{
 .status-dot--open{ background: rgba(16,185,129,.9); }
 .status-dot--soon{ background: rgba(245,158,11,.95); }
 .status-dot--closed{ background: rgba(239,68,68,.9); }
-.status-dot--unknown{ background: rgba(107,114,128,.8); 
-}
+.status-dot--unknown{ background: rgba(107,114,128,.8); }
